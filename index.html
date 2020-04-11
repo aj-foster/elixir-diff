@@ -43,7 +43,14 @@
     </header>
 
     <section>
-      <div id="diff"></div>
+      <div class="constrain">
+        <select name="output-format" id="output-format-select">
+          <option selected value="line-by-line">One Column</option>
+          <option value="side-by-side">Side-by-Side</option>
+        </select>
+
+        <div id="diff"></div>
+      </div>
     </section>
 
     <footer>

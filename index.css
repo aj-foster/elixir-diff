@@ -45,9 +45,16 @@ select {
   top: 0px;
 }
 
-#diff {
+.constrain {
   margin: auto;
   max-width: 80em;
+  position: relative;
+}
+
+#output-format-select {
+  position: absolute;
+  right: 1em;
+  top: 0px
 }
 
 footer {

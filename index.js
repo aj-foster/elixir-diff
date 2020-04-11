@@ -27,6 +27,9 @@ const startGeneratorSelect = document.getElementById("start-generator-select");
 const startVariantSelect = document.getElementById("start-variant-select");
 const resultGeneratorSelect = document.getElementById("result-generator-select");
 const resultVariantSelect = document.getElementById("result-variant-select");
+const outputFormatSelect = document.getElementById("output-format-select");
+
+const urlParams = new URLSearchParams(window.location.search);
 
 //
 // Helpers
@@ -118,7 +121,7 @@ const fetchAndRenderDiff = async () => {
   const diffElement = document.getElementById("diff");
   const configuration = {
     matching: "lines",
-    outputFormat: "line-by-line"
+    outputFormat: outputFormatSelect.value
   };
   const diff2htmlUi = new Diff2HtmlUI(diffElement, diff, configuration);
 
@@ -129,6 +132,21 @@ const fetchAndRenderDiff = async () => {
   diff2htmlUi.draw();
 }
 
+/**
+ * Update the URL to reflect dropdown choices.
+ */
+const updateQueryParams = (key, value) => {
+  urlParams.set(key, value);
+
+  const newLocation =
+      window.location.protocol + "//" +
+      window.location.host +
+      window.location.pathname +
+      "?" + urlParams.toString();
+
+  window.history.pushState({ path: newLocation }, "", newLocation);
+}
+
 //
 // On page load
 //
@@ -136,19 +154,28 @@ const fetchAndRenderDiff = async () => {
 fetchManifestAndRenderSelects();
 
 startGeneratorSelect.addEventListener('change', async (event) => {
+  updateQueryParams("from", startGeneratorSelect.value + "--" + startVariantSelect.value);
   await renderVariantSelect("start", event.target.value);
   fetchAndRenderDiff();
 });
 
 startVariantSelect.addEventListener('change', () => {
+  updateQueryParams("from", startGeneratorSelect.value + "--" + startVariantSelect.value);
   fetchAndRenderDiff();
 });
 
 resultGeneratorSelect.addEventListener('change', async (event) => {
   await renderVariantSelect("result", event.target.value);
+  updateQueryParams("to", resultGeneratorSelect.value + "--" + resultVariantSelect.value);
   fetchAndRenderDiff();
 });
 
 resultVariantSelect.addEventListener('change', () => {
+  updateQueryParams("to", resultGeneratorSelect.value + "--" + resultVariantSelect.value);
+  fetchAndRenderDiff();
+});
+
+outputFormatSelect.addEventListener('change', (event) => {
+  updateQueryParams("output", event.target.value);
   fetchAndRenderDiff();
 });
