@@ -1,0 +1,63 @@
+#!/bin/bash
+
+if [ ! -d projects/ ]
+then
+  echo "Please run this script in the root of the elixir-diff project"
+  exit 1
+fi
+
+mkdir -p diffs/
+
+#
+# Generate manifest of projects
+#
+
+# Expected folder structure:
+#   projects/<generator>/<version>/<variant>/
+#
+# i.e.
+#   projects/elixir/1.9.1/base/
+#
+
+GENERATORS=(elixir)
+
+for generator in $GENERATORS
+do
+  VERSIONS=$(ls -1 projects/$generator/)
+
+  for version in $VERSIONS
+  do
+    VARIANTS=$(ls -1 projects/$generator/$version/)
+
+    for variant in $VARIANTS
+    do
+      echo "$generator/$version/$variant" >> diffs/manifest.txt
+    done
+  done
+done
+
+sort diffs/manifest.txt | uniq > diffs/manifest-tmp.txt
+mv -f diffs/manifest-tmp.txt diffs/manifest.txt
+
+#
+# Generate missing diffs
+#
+
+for start in $(cat diffs/manifest.txt)
+do
+  start_abbr=$(echo $start | sed 's|/|--|g')
+
+  for result in $(cat diffs/manifest.txt)
+  do
+    result_abbr=$(echo $result | sed 's|/|--|g')
+
+    if [ ! -f "diffs/$start_abbr/$result_abbr.diff" ]
+    then
+      mkdir -p "diffs/$start_abbr"
+      git diff --no-index "projects/$start" "projects/$result" \
+        | sed "s|a/projects/$start/||g" \
+        | sed "s|b/projects/$result/||g" \
+        > "diffs/$start_abbr/$result_abbr.diff"
+    fi
+  done
+done
