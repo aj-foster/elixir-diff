@@ -112,8 +112,6 @@ const fetchAndRenderDiff = async () => {
   const start = startGeneratorSelect.value + "--" + startVariantSelect.value;
   const result = resultGeneratorSelect.value + "--" + resultVariantSelect.value;
 
-  console.log("diffs/" + start + "/" + result + ".diff");
-
   const response = await fetch("diffs/" + start + "/" + result + ".diff");
   const diff = await response.text();
 
@@ -124,9 +122,11 @@ const fetchAndRenderDiff = async () => {
   };
   const diff2htmlUi = new Diff2HtmlUI(diffElement, diff, configuration);
 
+  const elixirHighlighter = diff2htmlUi.hljs.getLanguage("elixir");
+  diff2htmlUi.hljs.registerLanguage("ex", () => elixirHighlighter);
+  diff2htmlUi.hljs.registerLanguage("exs", () => elixirHighlighter);
+
   diff2htmlUi.draw();
-  diff2htmlUi.highlightCode();
- 
 }
 
 //
