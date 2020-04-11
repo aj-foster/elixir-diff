@@ -4,7 +4,8 @@ html, body {
 }
 
 body {
-  background-color: rgb(27, 29, 33);
+  background-color: rgb(40, 44, 52);
+  color: #fff;
   font-family: 'Lato', sans-serif;
   font-weight: 300;
 }
@@ -12,7 +13,6 @@ body {
 header {
   background: linear-gradient(to right, rgb(78, 42, 142), rgb(54, 42, 140));
   background-color: rgb(78, 42, 142);
-  color: #fff;
   min-height: 15em;
   padding: 5em;
   text-align: center;
@@ -37,8 +37,12 @@ select {
   min-width: 8em;
 }
 
+#diff {
+  margin: auto;
+  max-width: 75em;
+}
+
 footer {
-  color: #fff;
   margin: 2em;
   text-align: center;
 }
