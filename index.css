@@ -13,6 +13,7 @@ body {
 header {
   background: linear-gradient(to right, rgb(78, 42, 142), rgb(54, 42, 140));
   background-color: rgb(78, 42, 142);
+  border-bottom: 1px solid rgb(33, 37, 43);
   margin-bottom: 5em;
   padding: 5em;
   text-align: center;
@@ -37,9 +38,16 @@ select {
   min-width: 8em;
 }
 
+.github {
+  display: block;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+}
+
 #diff {
   margin: auto;
-  max-width: 75em;
+  max-width: 80em;
 }
 
 footer {
