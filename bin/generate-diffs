@@ -36,7 +36,7 @@ do
   done
 done
 
-sort diffs/manifest.txt | uniq > diffs/manifest-tmp.txt
+sort -V -u -r diffs/manifest.txt > diffs/manifest-tmp.txt
 mv -f diffs/manifest-tmp.txt diffs/manifest.txt
 
 #
