@@ -184,15 +184,15 @@
   display: inline-block;
   box-sizing: border-box;
   width: 4em;
-  background-color: #fff;
-  color: rgba(0, 0, 0, 0.3);
+  background-color: rgb(33, 37, 43);
+  color: #abb2bf;
   text-align: right;
-  /* border: solid #eeeeee; */
-  /* border-width: 0 1px 0 1px; */
+  border: solid rgb(33, 37, 43);
+  border-width: 1px;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 0.5em 0 0.5em;
+  padding: 0 0.5em;
 }
 
 .d2h-code-side-linenumber:after {
@@ -201,8 +201,10 @@
 
 .d2h-code-side-emptyplaceholder,
 .d2h-emptyplaceholder {
-  background-color: #f1f1f1;
-  border-color: #e1e1e1;
+  /* background-color: #f1f1f1;
+  border-color: #e1e1e1; */
+
+  background-color: rgb(33, 37, 43);
 }
 
 .d2h-code-linenumber,
@@ -223,18 +225,20 @@
 
 .d2h-del {
   background-color: rgb(59, 25, 30);
-  /* border-color: #e9aeae; */
+  border-color: rgb(59, 25, 30);
 }
 
 .d2h-ins {
   background-color: rgb(25, 47, 56);
-  /* border-color: #b4e2b4; */
+  border-color: rgb(25, 47, 56);
 }
 
 .d2h-info {
   /* background-color: #f8fafd;
   color: rgba(0, 0, 0, 0.3);
   border-color: #d5e4f2; */
+
+  display: none;
 
   background-color: rgb(33, 37, 43);
   color: #abb2bf;
@@ -254,7 +258,7 @@
  */
 
 .d2h-file-list-wrapper {
-  margin-bottom: 10px;
+  margin-bottom: 2em;
 }
 
 .d2h-file-list-wrapper a {
@@ -267,11 +271,13 @@
 }
 
 .d2h-file-list-header {
+  margin-bottom: 1em;
   text-align: left;
 }
 
 .d2h-file-list-title {
   font-weight: bold;
+  margin-right: 1em;
 }
 
 .d2h-file-list-line {
@@ -299,8 +305,9 @@
 }
 
 .d2h-file-switch {
+  color: rgb(77, 120, 204);
   display: none;
-  font-size: 10px;
+  /* font-size: 10px; */
   cursor: pointer;
 }
 
