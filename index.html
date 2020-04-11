@@ -4,11 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elixir Diff</title>
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.1/build/styles/atom-one-light.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html@3.1.6/bundles/css/diff2html.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.18.1/build/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html@3.1.6/bundles/css/diff2html.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&display=swap">
+    <link rel="stylesheet" href="index.css">
   </head>
   <body>
-    <div id="diff"></div>
+    <header>
+      <h1>Elixir Diff</h1>
+      <p>Compare files from projects generated using various Elixir generators.</p>
+      <p>
+        <select name="start-generator" id="start-generator-select">
+          <option value="">Loading...</option>
+        </select>
+        <select name="start-variant" id="start-variant-select">
+          <option value="">...</option>
+        </select>
+
+        <span class="space">compared to...</span>
+
+        <select name="result-generator" id="result-generator-select">
+          <option value="">Loading...</option>
+        </select>
+        <select name="result-variant" id="result-variant-select">
+          <option value="">...</option>
+        </select>
+      </p>
+    </header>
+
+    <section>
+      <div id="diff"></div>
+    </section>
+
+    <footer>
+      Created with &lt;3 by AJ Foster.
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/diff2html@3.1.6/bundles/js/diff2html.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/diff2html@3.1.6/bundles/js/diff2html-ui.min.js"></script>
     <script src="index.js"></script>

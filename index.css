@@ -1,0 +1,44 @@
+html, body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  background-color: rgb(27, 29, 33);
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+}
+
+header {
+  background: linear-gradient(to right, rgb(78, 42, 142), rgb(54, 42, 140));
+  background-color: rgb(78, 42, 142);
+  color: #fff;
+  min-height: 15em;
+  padding: 5em;
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.5em;
+  margin: 0px 0px 2rem;
+}
+
+p {
+  font-size: 1.25em;
+}
+
+span.space {
+  margin: 0px 1em;
+}
+
+select {
+  font-size: 1rem;
+  font-weight: 400;
+  min-width: 8em;
+}
+
+footer {
+  color: #fff;
+  margin: 2em;
+  text-align: center;
+}
