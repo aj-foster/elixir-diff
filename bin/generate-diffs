@@ -19,9 +19,9 @@ mkdir -p diffs/
 #   projects/elixir/1.9.1/base/
 #
 
-GENERATORS=(elixir)
+GENERATORS=("elixir" "phoenix")
 
-for generator in $GENERATORS
+for generator in ${GENERATORS[@]}
 do
   VERSIONS=$(ls -1 projects/$generator/)
 
