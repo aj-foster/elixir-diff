@@ -32,6 +32,7 @@ p {
   align-items: center;
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -54,7 +55,8 @@ p {
 
 .space {
   font-size: 1.25em;
-  margin: 0px 1em;
+  margin: 2em;
+  white-space: nowrap;
 }
 
 select {
