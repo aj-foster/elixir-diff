@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Much of this script was adapted from the folks at PhoenixDiff.
+# https://github.com/navinpeiris/phoenix-diff/blob/master/bin/generate-sample-app
+
 if [ -z "$1" ]
 then
   echo "Usage: $0 [Phoenix Version]"
