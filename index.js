@@ -196,6 +196,9 @@ const fetchAndRenderDiff = async () => {
   diff2htmlUi.hljs.registerLanguage("ex", () => elixirHighlighter);
   diff2htmlUi.hljs.registerLanguage("exs", () => elixirHighlighter);
 
+  const plainHighlighter = diff2htmlUi.hljs.getLanguage("plaintext");
+  diff2htmlUi.hljs.registerLanguage("gitignore", () => plainHighlighter);
+
   diff2htmlUi.draw();
 }
 
