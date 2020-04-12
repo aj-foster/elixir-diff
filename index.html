@@ -14,23 +14,29 @@
     <header>
       <h1>Elixir Diff</h1>
       <p>Compare files from projects generated using various Elixir generators.</p>
-      <p>
-        <select name="start-generator" id="start-generator-select">
-          <option value="">Loading...</option>
-        </select>
-        <select name="start-variant" id="start-variant-select">
-          <option value="">...</option>
-        </select>
+      <div class="compare constrain">
+        <div>
+          <p>
+            <select name="start-generator" id="start-generator-select">
+              <option value="">Loading...</option>
+            </select>
+          </p>
+          
+          <p class="checks" id="start-variant-checks"></p>
+        </div>
 
-        <span class="space">compared to...</span>
+        <div class="space">compared to...</div>
 
-        <select name="result-generator" id="result-generator-select">
-          <option value="">Loading...</option>
-        </select>
-        <select name="result-variant" id="result-variant-select">
-          <option value="">...</option>
-        </select>
-      </p>
+        <div>
+          <p>
+            <select name="result-generator" id="result-generator-select">
+              <option value="">Loading...</option>
+            </select>
+          </p>
+          
+          <p class="checks" id="result-variant-checks"></p>
+        </div>
+      </div>
 
       <a href="https://github.com/aj-foster/elixir-diff" title="See Source on GitHub" class="github">
         <!-- Taken from http://tholman.com/github-corners/ -->

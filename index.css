@@ -28,7 +28,29 @@ p {
   font-size: 1.25em;
 }
 
-span.space {
+.compare {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.compare div {
+  flex-basis: 1;
+  text-align: center;
+}
+
+.checks {
+  display: inline-flex;
+  margin: 0px 1em;
+}
+
+.checks label {
+  margin: 0px 0.5em 0.5em 0px;
+}
+
+.space {
+  font-size: 1.25em;
   margin: 0px 1em;
 }
 

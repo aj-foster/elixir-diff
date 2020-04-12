@@ -6,11 +6,10 @@ const generators = [
   {
     name: "Elixir",
     value: "elixir",
+    base: "mix new",
     variants: [
-      {name: "mix new", value: "base"},
-      {name: "mix new --sup", value: "sup"},
-      {name: "mix new --umbrella", value: "umbrella"},
-      {name: "mix new --sup --umbrella", value: "sup-umbrella"}
+      {name: "--sup", value: "sup"},
+      {name: "--umbrella", value: "umbrella"}
     ]
   }
 ]
@@ -23,10 +22,14 @@ const defaultResultVariant = "sup";
 // DOM handles
 //
 
+const startForm = document.getElementById("start-form");
 const startGeneratorSelect = document.getElementById("start-generator-select");
-const startVariantSelect = document.getElementById("start-variant-select");
+const startVariantChecks = document.getElementById("start-variant-checks");
+
+const resultForm = document.getElementById("result-form");
 const resultGeneratorSelect = document.getElementById("result-generator-select");
-const resultVariantSelect = document.getElementById("result-variant-select");
+const resultVariantChecks = document.getElementById("result-variant-checks");
+
 const outputFormatSelect = document.getElementById("output-format-select");
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -73,10 +76,10 @@ const fetchManifestAndRenderSelects = async () => {
   startGeneratorSelect.innerHTML = generatorOptions;
   resultGeneratorSelect.innerHTML = generatorOptions;
 
-  renderVariantSelect("start", defaultGenerator, true);
-  renderVariantSelect("result", defaultGenerator, true);
+  renderVariantSelect("start", defaultGenerator);
+  renderVariantSelect("result", defaultGenerator);
 
-  fetchAndRenderDiff();
+  // fetchAndRenderDiff();
 }
 
 /**
@@ -86,34 +89,64 @@ const fetchManifestAndRenderSelects = async () => {
  * @param generatorVersion Generator value, i.e. "elixir--1.9.1"
  * @param selectDefault Whether to force selection of a particular option
  */
-const renderVariantSelect = (startOrResult, generatorVersion, selectDefault) => {
+const renderVariantSelect = (startOrResult, generatorVersion) => {
   const [generatorValue] = generatorVersion.split("--");
   const generator = generators.find(({ value }) => value === generatorValue);
-  const variantSelect = document.getElementById(`${startOrResult}-variant-select`);
+  const variantChecks = document.getElementById(`${startOrResult}-variant-checks`);
+  const currentVariant = window[startOrResult + "Variants"];
 
-  const variantOptions = generator.variants.map((variant) => {
-    if (selectDefault && startOrResult === "start" && variant.value === defaultStartVariant) {
-      return `<option selected value="${variant.value}">${variant.name}</option>`;
+  const variantOptions = generator.variants.map((variant) => `
+    <label>
+      <input
+        type="checkbox"
+        name="${startOrResult}-variant-${variant.value}"
+        value="${variant.value}"
+        ${currentVariant.includes(variant.value) ? "checked" : ""}>
+      ${variant.name}
+    </label>
+    `).join("");
 
-    } else if (selectDefault && startOrResult === "result" && variant.value === defaultResultVariant) {
-      return `<option selected value="${variant.value}">${variant.name}</option>`;
-
-    } else {
-      return `<option value="${variant.value}">${variant.name}</option>`;
-    }
-  }).join("");
-
-  if (variantSelect.innerHTML !== variantOptions) {
-    variantSelect.innerHTML = variantOptions;
+  if (variantChecks.innerHTML !== variantOptions) {
+    variantChecks.innerHTML = variantOptions;
+    variantChecks.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("change", handleVariantChange);
+    });
   }
-}
+};
+
+const handleVariantChange = () => {
+  window.startVariants = Array.from(
+    startVariantChecks
+      .querySelectorAll("input")
+      .values()
+    )
+    .filter((input) => input.checked)
+    .map((input) => input.value)
+    .join("-")
+    || "base";
+
+  window.resultVariants = Array.from(
+    resultVariantChecks
+      .querySelectorAll("input")
+      .values()
+    )
+    .filter((input) => input.checked)
+    .map((input) => input.value)
+    .join("-")
+    || "base";
+
+  fetchAndRenderDiff();
+};
 
 /**
  * Retrieve the diff for the currently selected start and result projects.
  */
 const fetchAndRenderDiff = async () => {
-  const start = startGeneratorSelect.value + "--" + startVariantSelect.value;
-  const result = resultGeneratorSelect.value + "--" + resultVariantSelect.value;
+  const start = window.startGenerator + "--" + window.startVariants;
+  const result = window.resultGenerator + "--" + window.resultVariants;
+
+  updateQueryParams("from", start);
+  updateQueryParams("to", result);
 
   const response = await fetch("diffs/" + start + "/" + result + ".diff");
   const diff = await response.text();
@@ -151,27 +184,47 @@ const updateQueryParams = (key, value) => {
 // On page load
 //
 
-fetchManifestAndRenderSelects();
+// Set variants based on URL params, if available.
+
+const presetStart = urlParams.get("from");
+const presetResult = urlParams.get("to");
+
+if (presetStart) {
+  const [generator, version, variant] = presetStart.split("--");
+
+  window.startGenerator = `${generator}--${version}`;
+  window.startVariants = variant;
+} else {
+  window.startGenerator = defaultGenerator;
+  window.startVariants = defaultStartVariant;
+}
+
+if (presetResult) {
+  const [generator, version, variant] = presetResult.split("--");
+
+  window.resultGenerator = `${generator}--${version}`;
+  window.resultVariants = variant;
+} else {
+  window.resultGenerator = defaultGenerator;
+  window.resultVariants = defaultResultVariant;
+}
+
+// Load versions from manifest and render initial diff.
+
+fetchManifestAndRenderSelects()
+  .then(() => fetchAndRenderDiff());
+
+// Add listeners for generator and display changes.
 
 startGeneratorSelect.addEventListener('change', async (event) => {
-  updateQueryParams("from", startGeneratorSelect.value + "--" + startVariantSelect.value);
+  window.startGenerator = event.target.value;
   await renderVariantSelect("start", event.target.value);
   fetchAndRenderDiff();
 });
 
-startVariantSelect.addEventListener('change', () => {
-  updateQueryParams("from", startGeneratorSelect.value + "--" + startVariantSelect.value);
-  fetchAndRenderDiff();
-});
-
 resultGeneratorSelect.addEventListener('change', async (event) => {
+  window.resultGenerator = event.target.value;
   await renderVariantSelect("result", event.target.value);
-  updateQueryParams("to", resultGeneratorSelect.value + "--" + resultVariantSelect.value);
-  fetchAndRenderDiff();
-});
-
-resultVariantSelect.addEventListener('change', () => {
-  updateQueryParams("to", resultGeneratorSelect.value + "--" + resultVariantSelect.value);
   fetchAndRenderDiff();
 });
 
