@@ -11,6 +11,20 @@ const generators = [
       {name: "--sup", value: "sup"},
       {name: "--umbrella", value: "umbrella"}
     ]
+  },
+  {
+    name: "Phoenix",
+    value: "phoenix",
+    base: "mix phx.new",
+    variants: [
+      {name: "--binary-id", value: "binaryid"},
+      {name: "--database mysql", value: "database"},
+      {name: "--no-ecto", value: "noecto"},
+      {name: "--no-gettext", value: "nogettext"},
+      {name: "--no-html", value: "nohtml"},
+      {name: "--no-webpack", value: "nowebpack"},
+      {name: "--umbella", value: "umbrella"}
+    ]
   }
 ]
 
@@ -67,17 +81,37 @@ const fetchManifestAndRenderSelects = async () => {
     generator.versions = generatorToVersionMap[generator.value];
   }
 
-  const generatorOptions = generators.map((generator) => {
+  const startGeneratorOptions = generators.map((generator) => {
     return generator.versions.map((version) => {
-      return `<option value="${generator.value}--${version}">${generator.name} ${version}</option>`;
-    })
+      const value = `${generator.value}--${version}`;
+
+      return `
+        <option
+            value="${value}"
+            ${window.startGenerator === value ? "selected" : ""}>
+          ${generator.name} ${version} (${generator.base})
+        </option>`;
+      });
   }).join("");
 
-  startGeneratorSelect.innerHTML = generatorOptions;
-  resultGeneratorSelect.innerHTML = generatorOptions;
+  const resultGeneratorOptions = generators.map((generator) => {
+    return generator.versions.map((version) => {
+      const value = `${generator.value}--${version}`;
 
-  renderVariantSelect("start", defaultGenerator);
-  renderVariantSelect("result", defaultGenerator);
+      return `
+        <option
+            value="${value}"
+            ${window.resultGenerator === value ? "selected" : ""}>
+          ${generator.name} ${version} (${generator.base})
+        </option>`;
+      });
+  }).join("");
+
+  startGeneratorSelect.innerHTML = startGeneratorOptions;
+  resultGeneratorSelect.innerHTML = resultGeneratorOptions;
+
+  renderVariantSelect("start");
+  renderVariantSelect("result");
 
   // fetchAndRenderDiff();
 }
@@ -89,8 +123,8 @@ const fetchManifestAndRenderSelects = async () => {
  * @param generatorVersion Generator value, i.e. "elixir--1.9.1"
  * @param selectDefault Whether to force selection of a particular option
  */
-const renderVariantSelect = (startOrResult, generatorVersion) => {
-  const [generatorValue] = generatorVersion.split("--");
+const renderVariantSelect = (startOrResult) => {
+  const [generatorValue] = window[startOrResult + "Generator"].split("--");
   const generator = generators.find(({ value }) => value === generatorValue);
   const variantChecks = document.getElementById(`${startOrResult}-variant-checks`);
   const currentVariant = window[startOrResult + "Variants"];

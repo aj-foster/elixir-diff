@@ -36,17 +36,20 @@ p {
 }
 
 .compare div {
-  flex-basis: 1;
+  flex: 1;
   text-align: center;
 }
 
 .checks {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
   margin: 0px 1em;
 }
 
 .checks label {
   margin: 0px 0.5em 0.5em 0px;
+  white-space: nowrap;
 }
 
 .space {
