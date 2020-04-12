@@ -116,8 +116,8 @@ const fetchManifestAndRenderSelects = async () => {
   startGeneratorSelect.innerHTML = startGeneratorOptions;
   resultGeneratorSelect.innerHTML = resultGeneratorOptions;
 
-  renderVariantSelect("start");
-  renderVariantSelect("result");
+  renderVariantSelect("start", true);
+  renderVariantSelect("result", true);
 
   // fetchAndRenderDiff();
 }
@@ -126,10 +126,9 @@ const fetchManifestAndRenderSelects = async () => {
  * Render the <select> options for either the start or result variant.
  * 
  * @param startOrResult "start" or "result"
- * @param generatorVersion Generator value, i.e. "elixir--1.9.1"
- * @param selectDefault Whether to force selection of a particular option
+ * @param firstRender Whether this is the first render of the variants
  */
-const renderVariantSelect = (startOrResult) => {
+const renderVariantSelect = (startOrResult, firstRender) => {
   const [generatorValue] = window[startOrResult + "Generator"].split("--");
   const generator = generators.find(({ value }) => value === generatorValue);
   const variantChecks = document.getElementById(`${startOrResult}-variant-checks`);
@@ -152,7 +151,9 @@ const renderVariantSelect = (startOrResult) => {
       input.addEventListener("change", handleVariantChange);
     });
 
-    window[startOrResult + "Variants"] = "base";
+    if (!firstRender) {
+      window[startOrResult + "Variants"] = "base";
+    }
   }
 };
 
