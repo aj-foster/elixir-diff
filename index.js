@@ -264,13 +264,13 @@ fetchManifestAndRenderSelects()
 
 startGeneratorSelect.addEventListener('change', async (event) => {
   window.startGenerator = event.target.value;
-  await renderVariantSelect("start", event.target.value);
+  await renderVariantSelect("start");
   fetchAndRenderDiff();
 });
 
 resultGeneratorSelect.addEventListener('change', async (event) => {
   window.resultGenerator = event.target.value;
-  await renderVariantSelect("result", event.target.value);
+  await renderVariantSelect("result");
   fetchAndRenderDiff();
 });
 
