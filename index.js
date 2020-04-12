@@ -151,6 +151,8 @@ const renderVariantSelect = (startOrResult) => {
     variantChecks.querySelectorAll("input").forEach((input) => {
       input.addEventListener("change", handleVariantChange);
     });
+
+    window[startOrResult + "Variants"] = "base";
   }
 };
 
