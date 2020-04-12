@@ -9,17 +9,6 @@ fi
 PHOENIX_VERSION="$1"
 
 #
-# Helper
-#
-
-replace_if_exists() {
-  if [ -f "$2" ]
-  then
-    sed -i '' "$1" "$2"
-  fi
-}
-
-#
 # Install archive
 #
 
@@ -41,16 +30,24 @@ cd "projects/phoenix/$PHOENIX_VERSION"
 #
 # (on/off) ^ (7 flags) = 128 combinations. Yikes.
 
-for i in {0..127}
-do
+replace_if_exists() {
+  if [ -f "$2" ]
+  then
+    sed -i '' "$1" "$2"
+  else
+    echo "Could not find file $2"
+  fi
+}
+
+generate() {
   # Create a truth table using bitwise AND of the incrementing integer $i.
-  let "binaryid =  $i & 2#1"
-  let "database =  $i & 2#10"
-  let "noecto =    $i & 2#100"
-  let "nogettext = $i & 2#1000"
-  let "nohtml =    $i & 2#10000"
-  let "nowebpack = $i & 2#100000"
-  let "umbrella =  $i & 2#1000000"
+  let "binaryid =  $1 & 2#1"
+  let "database =  $1 & 2#10"
+  let "noecto =    $1 & 2#100"
+  let "nogettext = $1 & 2#1000"
+  let "nohtml =    $1 & 2#10000"
+  let "nowebpack = $1 & 2#100000"
+  let "umbrella =  $1 & 2#1000000"
 
   FLAGS=""
   VARIANT=""
@@ -64,6 +61,7 @@ do
   if [ $umbrella -eq 0 ];  then FLAGS="$FLAGS --umbrella";       VARIANT="$VARIANT-umbrella"; fi
 
   if [ -z "$VARIANT" ]; then VARIANT="base"; else VARIANT="${VARIANT:1}"; fi
+  if [ -d $VARIANT ]; then exit 0; fi
 
   echo no \
     | mix phx.new $FLAGS \
@@ -71,12 +69,13 @@ do
     $VARIANT/
 
   if [ $umbrella -eq 0 ]; then mv "${VARIANT}_umbrella" $VARIANT; fi
-  if [ -d $VARIANT ]; then continue; fi
 
-  replace_if_exists 's/secret_key_base:.*/secret_key_base: "[redacted]"/g' $VARIANT/config/prod.secret.exs
   replace_if_exists 's/secret_key_base:.*/secret_key_base: "[redacted]",/g' $VARIANT/config/config.exs
   replace_if_exists 's/signing_salt:.*/signing_salt: "[redacted]"]/g' $VARIANT/config/config.exs
-  replace_if_exists 's/signing_salt:.*/signing_salt: "[redacted]"/g' $VARIANT/lib/sample_app_web/endpoint.ex
+  replace_if_exists 's/signing_salt:.*/signing_salt: "[redacted]"/g' $VARIANT/lib/my_app_web/endpoint.ex
+}
 
-  git add -f $VARIANT/config/prod.secret.exs
-done
+# Parallelize the generation of projects. Change the -P flag to match # of cores.
+export -f generate
+export -f replace_if_exists
+seq 0 127 | xargs -n 1 -P 16 -I {} bash -c 'generate "{}"'

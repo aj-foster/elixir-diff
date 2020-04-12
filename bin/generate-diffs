@@ -53,11 +53,13 @@ do
 
     if [ ! -f "diffs/$start_abbr/$result_abbr.diff" ]
     then
-      mkdir -p "diffs/$start_abbr"
-      git diff --no-index "projects/$start" "projects/$result" \
-        | sed "s|a/projects/$start/||g" \
-        | sed "s|b/projects/$result/||g" \
-        > "diffs/$start_abbr/$result_abbr.diff"
+      (
+        mkdir -p "diffs/$start_abbr"
+        git diff --no-index "projects/$start" "projects/$result" \
+          | sed "s|a/projects/$start/||g" \
+          | sed "s|b/projects/$result/||g" \
+          > "diffs/$start_abbr/$result_abbr.diff"
+      ) &
     fi
   done
 done
