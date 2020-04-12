@@ -23,7 +23,7 @@ const generators = [
       {name: "--no-gettext", value: "nogettext"},
       {name: "--no-html", value: "nohtml"},
       {name: "--no-webpack", value: "nowebpack"},
-      {name: "--umbella", value: "umbrella"}
+      {name: "--umbrella", value: "umbrella"}
     ]
   }
 ]
