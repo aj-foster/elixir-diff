@@ -13,6 +13,12 @@ const generators = [
     ]
   },
   {
+    name: "Nerves",
+    value: "nerves",
+    base: "mix nerves.new",
+    variants: [{name: "--no-nerves-pack", value: "no-nerves-pack"}]
+  },
+  {
     name: "Phoenix",
     value: "phoenix",
     base: "mix phx.new",

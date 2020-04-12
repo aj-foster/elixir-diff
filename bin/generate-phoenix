@@ -12,9 +12,9 @@ PHOENIX_VERSION="$1"
 # Install archive
 #
 
-# echo "Installing archive for mix phx.new $PHOENIX_VERSION"
-# mix local.hex --force
-# mix archive.install hex phx_new $PHOENIX_VERSION --force
+echo "Installing archive for mix phx.new $PHOENIX_VERSION"
+mix local.hex --force
+mix archive.install hex phx_new $PHOENIX_VERSION --force
 
 mkdir -p "projects/phoenix/$PHOENIX_VERSION/"
 cd "projects/phoenix/$PHOENIX_VERSION"
