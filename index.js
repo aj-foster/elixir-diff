@@ -34,7 +34,7 @@ const generators = [
   }
 ]
 
-const defaultGenerator = "elixir--1.10.2";
+const defaultGenerator = "elixir";
 const defaultStartVariant = "base";
 const defaultResultVariant = "sup";
 
@@ -80,6 +80,11 @@ const fetchManifestAndRenderSelects = async () => {
       generatorToVersionMap[generator] = [version];
     } else if (!generatorToVersionMap[generator].includes(version)) {
       generatorToVersionMap[generator].push(version);
+    }
+
+    if (generator === defaultGenerator) {
+      window.startGenerator = `${generator}--${version}`;
+      window.resultGenerator = `${generator}--${version}`;
     }
   }
 
@@ -241,7 +246,6 @@ if (presetStart) {
   window.startGenerator = `${generator}--${version}`;
   window.startVariants = variant;
 } else {
-  window.startGenerator = defaultGenerator;
   window.startVariants = defaultStartVariant;
 }
 
@@ -251,7 +255,6 @@ if (presetResult) {
   window.resultGenerator = `${generator}--${version}`;
   window.resultVariants = variant;
 } else {
-  window.resultGenerator = defaultGenerator;
   window.resultVariants = defaultResultVariant;
 }
 
