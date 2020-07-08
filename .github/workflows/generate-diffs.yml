@@ -1,15 +1,73 @@
 name: Generate Diffs
-on: [push]
+on:
+  push:
+    branches: [master]
 
 jobs:
   build:
-    name: Greeting
     runs-on: ubuntu-latest
     steps:
-      - name: Hello world
-        uses: actions/hello-world-javascript-action@v1
+      - uses: actions/checkout@v2
+
+      # Check for the latest version of Elixir.
+      #
+      # ASSUME: GitHub API returns releases in reverse-chronological order
+      # ASSUME pre-release versions === versions with dashes
+      - name: Get Elixir Version
+        run: |
+        curl https://api.github.com/repos/elixir-lang/elixir/releases \
+        | jq '.[].tag_name' \
+        | grep -v '-' \
+        | head -1 \
+        | 's/["v]//g' \
+        > elixir-version.txt
+      - run: 'echo "::set-env name=ELIXIR_VERSION::$(cat elixir-version.txt)"'
+
+      # Check for the latest version of Phoenix.
+      #
+      # Same assumptions as above, except with the Hex.pm API.
+      - name: Get Phoenix Version
+        run: |
+        curl https://hex.pm/api/packages/phx_new \
+        | jq '.releases[].version' \
+        | grep -v '-' \
+        | head -1 \
+        | sed 's/"//g' \
+        > phoenix-version.txt
+      - run: 'echo "::set-env name=PHOENIX_VERSION::$(cat phoenix-version.txt)"'
+
+      # Check for the latest version of Nerves.
+      #
+      # Same assumptions as above.
+      - name: Get Nerves Version
+        run: |
+        curl https://hex.pm/api/packages/nerves_bootstrap \
+        | jq '.releases[].version' \
+        | grep -v '-' \
+        | head -1 \
+        | sed 's/"//g' \
+        > nerves-version.txt
+      - run: 'echo "::set-env name=NERVES_VERSION::$(cat nerves-version.txt)"'
+
+      # Install Elixir
+      - name: Install Elixir
+        uses: actions/setup-elixir@v1
         with:
-          who-to-greet: 'Mona the Octocat'
-        id: hello
-      - name: Echo the greeting's time
-        run: echo 'The time was ${{ steps.hello.outputs.time }}.'
+          otp-version: '23.0'
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+
+      # Create base projects
+      - run: ./bin/generate-elixir
+      - run: ./bin/generate-phoenix ${{ env.PHOENIX_VERSION }}
+      - run: ./bin/generate-nerves ${{ env.NERVES_VERSION }}
+
+      # Generate diffs between each project
+      - run: ./bin/generate-diffs
+
+      # Publish diffs to GitHub Pages
+      - name: Deploy Site
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          force_orphan: true
