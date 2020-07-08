@@ -17,9 +17,9 @@ Nothing world-changing here.
 
 **Examples**
 
-- [I forgot to add the `--sup` flag; how do I fix it?](https://aj-foster.github.io/elixir-diff/?from=elixir--1.10.2--base&to=elixir--1.10.2--sup)
-- [How do I remove HTML support and Webpack from my Phoenix app?](https://aj-foster.github.io/elixir-diff/?from=phoenix--1.4.16--base&to=phoenix--1.4.16--nohtml-nowebpack)
-- [What does the `--no-nerves-pack` flag do to my Nerves project?](https://aj-foster.github.io/elixir-diff/?from=nerves--1.8.0--base&to=nerves--1.8.0--no-nerves-pack)
+- [I forgot to add the `--sup` flag; how do I fix it?](https://aj-foster.github.io/elixir-diff/?from=elixir--latest--base&to=elixir--latest--sup)
+- [How do I remove HTML support and Webpack from my Phoenix app?](https://aj-foster.github.io/elixir-diff/?from=phoenix--latest--base&to=phoenix--latest--nohtml-nowebpack)
+- [What does the `--no-nerves-pack` flag do to my Nerves project?](https://aj-foster.github.io/elixir-diff/?from=nerves--latest--base&to=nerves--latest--no-nerves-pack)
 
 If you're interested in changes to generators across versions of Phoenix, I highly recommend you use [PhoenixDiff](https://phoenixdiff.org/).
 

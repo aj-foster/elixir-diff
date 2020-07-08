@@ -2,6 +2,13 @@
 // Configuration 
 //
 
+/**
+ * JavaScript-level configuration of what variants (flags) are available for each generator. If
+ * you make changes, here, ensure the relevant generator script changes as well.
+ * 
+ * In `fetchManifestAndRenderSelects`, this configuration will get filled in with lists of
+ * `versions` for each generator.
+ */
 const generators = [
   {
     name: "Elixir",
@@ -34,6 +41,11 @@ const generators = [
   }
 ]
 
+/**
+ * When the page loads without any query parameters, use the latest version of `defaultGenerator` as
+ * the default selection. Use `defaultStartVariant` as the starting variant (selected on the left)
+ * and `defaultResultVariant` as the result variant (selected on the right).
+ */
 const defaultGenerator = "elixir";
 const defaultStartVariant = "base";
 const defaultResultVariant = "sup";
@@ -81,18 +93,18 @@ const fetchManifestAndRenderSelects = async () => {
     } else if (!generatorToVersionMap[generator].includes(version)) {
       generatorToVersionMap[generator].push(version);
     }
-
-    if (generator === defaultGenerator) {
-      window.startGenerator = `${generator}--${version}`;
-      window.resultGenerator = `${generator}--${version}`;
-    }
   }
 
   for (const generator of generators) {
     generator.versions = generatorToVersionMap[generator.value];
   }
 
-  const startGeneratorOptions = generators.map((generator) => {
+  // Before rendering the selects, check the URL (specifically, query params) for preset diffs
+  // to load.
+  setSelectionsFromURL();
+
+  // Render options in the start (left) selection.
+  startGeneratorSelect.innerHTML = generators.map((generator) => {
     return generator.versions.map((version) => {
       const value = `${generator.value}--${version}`;
 
@@ -105,7 +117,8 @@ const fetchManifestAndRenderSelects = async () => {
       });
   }).join("");
 
-  const resultGeneratorOptions = generators.map((generator) => {
+  // Render options in the result (right) selection.
+  resultGeneratorSelect.innerHTML = generators.map((generator) => {
     return generator.versions.map((version) => {
       const value = `${generator.value}--${version}`;
 
@@ -118,14 +131,57 @@ const fetchManifestAndRenderSelects = async () => {
       });
   }).join("");
 
-  startGeneratorSelect.innerHTML = startGeneratorOptions;
-  resultGeneratorSelect.innerHTML = resultGeneratorOptions;
-
+  // Now render check marks for variants (flags).
   renderVariantSelect("start", true);
   renderVariantSelect("result", true);
-
-  // fetchAndRenderDiff();
 }
+
+/**
+ * Set the values of window.{startGenerator, startVariants, resultGenerator, resultVariants} based
+ * on query params present in the URL.
+ */
+const setSelectionsFromURL = () => {
+  const presetStart = urlParams.get("from");
+  const presetResult = urlParams.get("to");
+
+  if (presetStart) {
+    let [generator, version, variant] = presetStart.split("--");
+
+    if (version === 'latest') {
+      version = getLatestVersionOfGenerator(generator);
+    }
+
+    window.startGenerator = `${generator}--${version}`;
+    window.startVariants = variant;
+  } else {
+    window.startGenerator = `${defaultGenerator}--${getLatestVersionOfGenerator(defaultGenerator)}`;
+    window.startVariants = defaultStartVariant;
+  }
+  
+  if (presetResult) {
+    let [generator, version, variant] = presetResult.split("--");
+
+    if (version === 'latest') {
+      version = getLatestVersionOfGenerator(generator);
+    }
+    
+    window.resultGenerator = `${generator}--${version}`;
+    window.resultVariants = variant;
+  } else {
+    window.resultGenerator = `${defaultGenerator}--${getLatestVersionOfGenerator(defaultGenerator)}`;
+    window.resultVariants = defaultResultVariant;
+  }
+};
+
+/**
+ * Returns the latest version number for the given generator.
+ * 
+ * @param {string} generator Generator for which to return the latest version.
+ * @returns {string} Latest version number of the given generator.
+ */
+const getLatestVersionOfGenerator = (generator) => {
+  return generators.find((gen) => gen.value === generator).versions[0];
+};
 
 /**
  * Render the <select> options for either the start or result variant.
@@ -162,6 +218,9 @@ const renderVariantSelect = (startOrResult, firstRender) => {
   }
 };
 
+/**
+ * Handler triggered when one of the checkboxes for variants (flags) changes.
+ */
 const handleVariantChange = () => {
   window.startVariants = Array.from(
     startVariantChecks
@@ -234,29 +293,6 @@ const updateQueryParams = (key, value) => {
 //
 // On page load
 //
-
-// Set variants based on URL params, if available.
-
-const presetStart = urlParams.get("from");
-const presetResult = urlParams.get("to");
-
-if (presetStart) {
-  const [generator, version, variant] = presetStart.split("--");
-
-  window.startGenerator = `${generator}--${version}`;
-  window.startVariants = variant;
-} else {
-  window.startVariants = defaultStartVariant;
-}
-
-if (presetResult) {
-  const [generator, version, variant] = presetResult.split("--");
-
-  window.resultGenerator = `${generator}--${version}`;
-  window.resultVariants = variant;
-} else {
-  window.resultVariants = defaultResultVariant;
-}
 
 // Load versions from manifest and render initial diff.
 
