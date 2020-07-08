@@ -1,7 +1,7 @@
 # Elixir Diff
 
 View the differences between files created by various Elixir project generators.
-[https://aj-foster.github.io/elixir-diff/](https://aj-foster.github.io/elixir-diff)
+[https://elixirdiff.com/](https://elixirdiff.com)
 
 ## What is this?
 
@@ -17,9 +17,9 @@ Nothing world-changing here.
 
 **Examples**
 
-- [I forgot to add the `--sup` flag; how do I fix it?](https://aj-foster.github.io/elixir-diff/?from=elixir--latest--base&to=elixir--latest--sup)
-- [How do I remove HTML support and Webpack from my Phoenix app?](https://aj-foster.github.io/elixir-diff/?from=phoenix--latest--base&to=phoenix--latest--nohtml-nowebpack)
-- [What does the `--no-nerves-pack` flag do to my Nerves project?](https://aj-foster.github.io/elixir-diff/?from=nerves--latest--base&to=nerves--latest--no-nerves-pack)
+- [I forgot to add the `--sup` flag; how do I fix it?](https://elixirdiff.com/?from=elixir--latest--base&to=elixir--latest--sup)
+- [How do I remove HTML support and Webpack from my Phoenix app?](https://elixirdiff.com/?from=phoenix--latest--base&to=phoenix--latest--nohtml-nowebpack)
+- [What does the `--no-nerves-pack` flag do to my Nerves project?](https://elixirdiff.com/?from=nerves--latest--base&to=nerves--latest--no-nerves-pack)
 
 If you're interested in changes to generators across versions of Phoenix, I highly recommend you use [PhoenixDiff](https://phoenixdiff.org/).
 
@@ -41,9 +41,11 @@ This just seemed like a project that could be accomplish with plain old HTML/CSS
 There's one line of Elixir code, `eval`ed in a script to get the current version.
 Other than that, jumping through the hoops of using vanilla JS and Bash were entertaining.
 
+One bonus of this setup is that GitHub will build and host the site for free, thanks to GitHub Actions and Pages.
+
 My use of `CanIUse` was sparse, and some of the more modern JavaScript features used may not work in all browsers.
 Please let me know if there's anything in particular that could be polyfilled or regressed.
-The lack of a build step for the site is probably okay for now.
+The lack of a front-end build step for the site is probably okay for now.
 
 ## Contributing
 

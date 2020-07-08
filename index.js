@@ -87,7 +87,7 @@ const fetchManifestAndRenderSelects = async () => {
     if (generator == null || generator === "") {
       continue;
     }
-    
+
     if (generatorToVersionMap[generator] == null) {
       generatorToVersionMap[generator] = [version];
     } else if (!generatorToVersionMap[generator].includes(version)) {
@@ -171,6 +171,12 @@ const setSelectionsFromURL = () => {
     window.resultGenerator = `${defaultGenerator}--${getLatestVersionOfGenerator(defaultGenerator)}`;
     window.resultVariants = defaultResultVariant;
   }
+
+  const start = window.startGenerator + "--" + window.startVariants;
+  const result = window.resultGenerator + "--" + window.resultVariants;
+
+  updateQueryParams("from", start, true);
+  updateQueryParams("to", result, true);
 };
 
 /**
@@ -276,18 +282,27 @@ const fetchAndRenderDiff = async () => {
 }
 
 /**
- * Update the URL to reflect dropdown choices.
+ * Update the URL to reflect dropdown choices. Optionally do this without forcing someone to go
+ * "back" an additional time.
  */
-const updateQueryParams = (key, value) => {
-  urlParams.set(key, value);
+const updateQueryParams = (key, value, updateWithoutPushing) => {
+  const previousValue = urlParams.get(key);
 
-  const newLocation =
-      window.location.protocol + "//" +
-      window.location.host +
-      window.location.pathname +
-      "?" + urlParams.toString();
+  if (previousValue !== value) {
+    urlParams.set(key, value);
 
-  window.history.pushState({ path: newLocation }, "", newLocation);
+    const newLocation =
+        window.location.protocol + "//" +
+        window.location.host +
+        window.location.pathname +
+        "?" + urlParams.toString();
+
+    if (updateWithoutPushing) {
+      window.history.replaceState({ path: newLocation }, "", newLocation);
+    } else {
+      window.history.pushState({ path: newLocation }, "", newLocation);
+    }
+  }
 }
 
 //
