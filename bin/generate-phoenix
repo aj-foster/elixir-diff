@@ -36,7 +36,7 @@ cd "projects/phoenix/$PHOENIX_VERSION"
 replace_if_exists() {
   if [ -f "$2" ]
   then
-    sed -i '' "$1" "$2"
+    sed -i'' "$1" "$2"
   else
     echo "Could not find file $2"
   fi
