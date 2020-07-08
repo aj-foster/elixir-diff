@@ -14,7 +14,7 @@ jobs:
       # ASSUME: GitHub API returns releases in reverse-chronological order
       # ASSUME pre-release versions === versions with dashes
       - name: Get Elixir Version
-        run: |
+        run: >
         curl https://api.github.com/repos/elixir-lang/elixir/releases \
         | jq '.[].tag_name' \
         | grep -v '-' \
@@ -27,7 +27,7 @@ jobs:
       #
       # Same assumptions as above, except with the Hex.pm API.
       - name: Get Phoenix Version
-        run: |
+        run: >
         curl https://hex.pm/api/packages/phx_new \
         | jq '.releases[].version' \
         | grep -v '-' \
@@ -40,7 +40,7 @@ jobs:
       #
       # Same assumptions as above.
       - name: Get Nerves Version
-        run: |
+        run: >
         curl https://hex.pm/api/packages/nerves_bootstrap \
         | jq '.releases[].version' \
         | grep -v '-' \
