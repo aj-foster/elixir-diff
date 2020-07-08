@@ -19,7 +19,7 @@ jobs:
           jq '.[].tag_name' | \
           grep -v '-' | \
           head -1 | \
-          's/["v]//g' > elixir-version.txt
+          sed 's/["v]//g' > elixir-version.txt
       - run: 'echo "::set-env name=ELIXIR_VERSION::$(cat elixir-version.txt)"'
 
       # Check for the latest version of Phoenix.
