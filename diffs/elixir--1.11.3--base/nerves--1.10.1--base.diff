@@ -1,0 +1,458 @@
+diff --git .formatter.exs .formatter.exs
+index d2cda26..8aab4bc 100644
+--- .formatter.exs
++++ .formatter.exs
+@@ -1,4 +1,8 @@
+ # Used by "mix format"
+ [
+-  inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"]
++  inputs: [
++    "{mix,.formatter}.exs",
++    "{config,lib,test}/**/*.{ex,exs}",
++    "rootfs_overlay/etc/iex.exs"
++  ]
+ ]
+diff --git .gitignore .gitignore
+index 2be4a13..b03e8b8 100644
+--- .gitignore
++++ .gitignore
+@@ -15,13 +15,3 @@
+ 
+ # If the VM crashes, it generates a dump, let's ignore it too.
+ erl_crash.dump
+-
+-# Also ignore archive artifacts (built via "mix archive.build").
+-*.ez
+-
+-# Ignore package tarball (built via "mix hex.build").
+-my_app-*.tar
+-
+-
+-# Temporary files for e.g. tests
+-/tmp
+diff --git README.md README.md
+index a0b6bf0..5d6faed 100644
+--- README.md
++++ README.md
+@@ -2,20 +2,31 @@
+ 
+ **TODO: Add description**
+ 
+-## Installation
++## Targets
+ 
+-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+-by adding `my_app` to your list of dependencies in `mix.exs`:
++Nerves applications produce images for hardware targets based on the
++`MIX_TARGET` environment variable. If `MIX_TARGET` is unset, `mix` builds an
++image that runs on the host (e.g., your laptop). This is useful for executing
++logic tests, running utilities, and debugging. Other targets are represented by
++a short name like `rpi3` that maps to a Nerves system image for that platform.
++All of this logic is in the generated `mix.exs` and may be customized. For more
++information about targets see:
+ 
+-```elixir
+-def deps do
+-  [
+-    {:my_app, "~> 0.1.0"}
+-  ]
+-end
+-```
++https://hexdocs.pm/nerves/targets.html#content
+ 
+-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
+-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
+-be found at [https://hexdocs.pm/my_app](https://hexdocs.pm/my_app).
++## Getting Started
+ 
++To start your Nerves app:
++  * `export MIX_TARGET=my_target` or prefix every command with
++    `MIX_TARGET=my_target`. For example, `MIX_TARGET=rpi3`
++  * Install dependencies with `mix deps.get`
++  * Create firmware with `mix firmware`
++  * Burn to an SD card with `mix firmware.burn`
++
++## Learn more
++
++  * Official docs: https://hexdocs.pm/nerves/getting-started.html
++  * Official website: https://nerves-project.org/
++  * Forum: https://elixirforum.com/c/nerves-forum
++  * Discussion Slack elixir-lang #nerves ([Invite](https://elixir-slackin.herokuapp.com/))
++  * Source: https://github.com/nerves-project/nerves
+diff --git a/projects/nerves/1.10.1/base/config/config.exs config/config.exs
+new file mode 100644
+index 0000000..294fe69
+--- /dev/null
++++ config/config.exs
+@@ -0,0 +1,33 @@
++# This file is responsible for configuring your application
++# and its dependencies with the aid of the Mix.Config module.
++#
++# This configuration file is loaded before any dependency and
++# is restricted to this project.
++import Config
++
++# Enable the Nerves integration with Mix
++Application.start(:nerves_bootstrap)
++
++config :my_app, target: Mix.target()
++
++# Customize non-Elixir parts of the firmware. See
++# https://hexdocs.pm/nerves/advanced-configuration.html for details.
++
++config :nerves, :firmware, rootfs_overlay: "rootfs_overlay"
++
++# Set the SOURCE_DATE_EPOCH date for reproducible builds.
++# See https://reproducible-builds.org/docs/source-date-epoch/ for more information
++
++config :nerves, source_date_epoch: "[redacted]"
++
++# Use Ringlogger as the logger backend and remove :console.
++# See https://hexdocs.pm/ring_logger/readme.html for more information on
++# configuring ring_logger.
++
++config :logger, backends: [RingLogger]
++
++if Mix.target() == :host or Mix.target() == :"" do
++  import_config "host.exs"
++else
++  import_config "target.exs"
++end
+diff --git a/projects/nerves/1.10.1/base/config/host.exs config/host.exs
+new file mode 100644
+index 0000000..a1d7678
+--- /dev/null
++++ config/host.exs
+@@ -0,0 +1,3 @@
++import Config
++
++# Add configuration that is only needed when running on the host here.
+diff --git a/projects/nerves/1.10.1/base/config/target.exs config/target.exs
+new file mode 100644
+index 0000000..6f633cc
+--- /dev/null
++++ config/target.exs
+@@ -0,0 +1,100 @@
++import Config
++
++# Use shoehorn to start the main application. See the shoehorn
++# docs for separating out critical OTP applications such as those
++# involved with firmware updates.
++
++config :shoehorn,
++  init: [:nerves_runtime, :nerves_pack],
++  app: Mix.Project.config()[:app]
++
++# Nerves Runtime can enumerate hardware devices and send notifications via
++# SystemRegistry. This slows down startup and not many programs make use of
++# this feature.
++
++config :nerves_runtime, :kernel, use_system_registry: false
++
++# Erlinit can be configured without a rootfs_overlay. See
++# https://github.com/nerves-project/erlinit/ for more information on
++# configuring erlinit.
++
++config :nerves,
++  erlinit: [
++    hostname_pattern: "nerves-%s"
++  ]
++
++# Configure the device for SSH IEx prompt access and firmware updates
++#
++# * See https://hexdocs.pm/nerves_ssh/readme.html for general SSH configuration
++# * See https://hexdocs.pm/ssh_subsystem_fwup/readme.html for firmware updates
++
++keys =
++  [
++    Path.join([System.user_home!(), ".ssh", "id_rsa.pub"]),
++    Path.join([System.user_home!(), ".ssh", "id_ecdsa.pub"]),
++    Path.join([System.user_home!(), ".ssh", "id_ed25519.pub"])
++  ]
++  |> Enum.filter(&File.exists?/1)
++
++if keys == [],
++  do:
++    Mix.raise("""
++    No SSH public keys found in ~/.ssh. An ssh authorized key is needed to
++    log into the Nerves device and update firmware on it using ssh.
++    See your project's config.exs for this error message.
++    """)
++
++config :nerves_ssh,
++  authorized_keys: Enum.map(keys, &File.read!/1)
++
++# Configure the network using vintage_net
++# See https://github.com/nerves-networking/vintage_net for more information
++config :vintage_net,
++  regulatory_domain: "US",
++  config: [
++    {"usb0", %{type: VintageNetDirect}},
++    {"eth0",
++     %{
++       type: VintageNetEthernet,
++       ipv4: %{method: :dhcp}
++     }},
++    {"wlan0", %{type: VintageNetWiFi}}
++  ]
++
++config :mdns_lite,
++  # The `host` key specifies what hostnames mdns_lite advertises.  `:hostname`
++  # advertises the device's hostname.local. For the official Nerves systems, this
++  # is "nerves-<4 digit serial#>.local".  mdns_lite also advertises
++  # "nerves.local" for convenience. If more than one Nerves device is on the
++  # network, delete "nerves" from the list.
++
++  host: [:hostname, "nerves"],
++  ttl: 120,
++
++  # Advertise the following services over mDNS.
++  services: [
++    %{
++      name: "SSH Remote Login Protocol",
++      protocol: "ssh",
++      transport: "tcp",
++      port: 22
++    },
++    %{
++      name: "Secure File Transfer Protocol over SSH",
++      protocol: "sftp-ssh",
++      transport: "tcp",
++      port: 22
++    },
++    %{
++      name: "Erlang Port Mapper Daemon",
++      protocol: "epmd",
++      transport: "tcp",
++      port: 4369
++    }
++  ]
++
++# Import target specific config. This must remain at the bottom
++# of this file so it overrides the configuration defined above.
++# Uncomment to use target specific configurations
++
++# import_config "#{Mix.target()}.exs"
+diff --git a/projects/nerves/1.10.1/base/lib/my_app/application.ex lib/my_app/application.ex
+new file mode 100644
+index 0000000..d57e31e
+--- /dev/null
++++ lib/my_app/application.ex
+@@ -0,0 +1,43 @@
++defmodule MyApp.Application do
++  # See https://hexdocs.pm/elixir/Application.html
++  # for more information on OTP Applications
++  @moduledoc false
++
++  use Application
++
++  def start(_type, _args) do
++    # See https://hexdocs.pm/elixir/Supervisor.html
++    # for other strategies and supported options
++    opts = [strategy: :one_for_one, name: MyApp.Supervisor]
++
++    children =
++      [
++        # Children for all targets
++        # Starts a worker by calling: MyApp.Worker.start_link(arg)
++        # {MyApp.Worker, arg},
++      ] ++ children(target())
++
++    Supervisor.start_link(children, opts)
++  end
++
++  # List all child processes to be supervised
++  def children(:host) do
++    [
++      # Children that only run on the host
++      # Starts a worker by calling: MyApp.Worker.start_link(arg)
++      # {MyApp.Worker, arg},
++    ]
++  end
++
++  def children(_target) do
++    [
++      # Children for all targets except host
++      # Starts a worker by calling: MyApp.Worker.start_link(arg)
++      # {MyApp.Worker, arg},
++    ]
++  end
++
++  def target() do
++    Application.get_env(:my_app, :target)
++  end
++end
+diff --git lib/my_app.ex lib/my_app.ex
+index af46ee9..a67da57 100644
+--- lib/my_app.ex
++++ lib/my_app.ex
+@@ -1,6 +1,6 @@
+ defmodule MyApp do
+   @moduledoc """
+-  Documentation for `MyApp`.
++  Documentation for MyApp.
+   """
+ 
+   @doc """
+@@ -8,7 +8,7 @@ defmodule MyApp do
+ 
+   ## Examples
+ 
+-      iex> MyApp.hello()
++      iex> MyApp.hello
+       :world
+ 
+   """
+diff --git mix.exs mix.exs
+index 169ac20..0d28119 100644
+--- mix.exs
++++ mix.exs
+@@ -1,28 +1,65 @@
+ defmodule MyApp.MixProject do
+   use Mix.Project
+ 
++  @app :my_app
++  @version "0.1.0"
++  @all_targets [:rpi, :rpi0, :rpi2, :rpi3, :rpi3a, :rpi4, :bbb, :osd32mp1, :x86_64]
++
+   def project do
+     [
+-      app: :my_app,
+-      version: "0.1.0",
+-      elixir: "~> 1.11",
++      app: @app,
++      version: @version,
++      elixir: "~> 1.9",
++      archives: [nerves_bootstrap: "~> 1.10"],
+       start_permanent: Mix.env() == :prod,
+-      deps: deps()
++      build_embedded: true,
++      deps: deps(),
++      releases: [{@app, release()}],
++      preferred_cli_target: [run: :host, test: :host]
+     ]
+   end
+ 
+   # Run "mix help compile.app" to learn about applications.
+   def application do
+     [
+-      extra_applications: [:logger]
++      mod: {MyApp.Application, []},
++      extra_applications: [:logger, :runtime_tools]
+     ]
+   end
+ 
+   # Run "mix help deps" to learn about dependencies.
+   defp deps do
+     [
+-      # {:dep_from_hexpm, "~> 0.3.0"},
+-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
++      # Dependencies for all targets
++      {:nerves, "~> 1.7.0", runtime: false},
++      {:shoehorn, "~> 0.7.0"},
++      {:ring_logger, "~> 0.8.1"},
++      {:toolshed, "~> 0.2.13"},
++
++      # Dependencies for all targets except :host
++      {:nerves_runtime, "~> 0.11.3", targets: @all_targets},
++      {:nerves_pack, "~> 0.4.0", targets: @all_targets},
++
++      # Dependencies for specific targets
++      {:nerves_system_rpi, "~> 1.13", runtime: false, targets: :rpi},
++      {:nerves_system_rpi0, "~> 1.13", runtime: false, targets: :rpi0},
++      {:nerves_system_rpi2, "~> 1.13", runtime: false, targets: :rpi2},
++      {:nerves_system_rpi3, "~> 1.13", runtime: false, targets: :rpi3},
++      {:nerves_system_rpi3a, "~> 1.13", runtime: false, targets: :rpi3a},
++      {:nerves_system_rpi4, "~> 1.13", runtime: false, targets: :rpi4},
++      {:nerves_system_bbb, "~> 2.8", runtime: false, targets: :bbb},
++      {:nerves_system_osd32mp1, "~> 0.4", runtime: false, targets: :osd32mp1},
++      {:nerves_system_x86_64, "~> 1.13", runtime: false, targets: :x86_64}
++    ]
++  end
++
++  def release do
++    [
++      overwrite: true,
++      cookie: "#{@app}_cookie",
++      include_erts: &Nerves.Release.erts/0,
++      steps: [&Nerves.Release.init/1, :assemble],
++      strip_beams: Mix.env() == :prod
+     ]
+   end
+ end
+diff --git a/projects/nerves/1.10.1/base/rel/vm.args.eex rel/vm.args.eex
+new file mode 100644
+index 0000000..42154b1
+--- /dev/null
++++ rel/vm.args.eex
+@@ -0,0 +1,49 @@
++## Add custom options here
++
++## Distributed Erlang Options
++##  The cookie needs to be configured prior to vm boot for
++##  for read only filesystem.
++
++-setcookie <%= @release.options[:cookie] %>
++
++## Use Ctrl-C to interrupt the current shell rather than invoking the emulator's
++## break handler and possibly exiting the VM.
+++Bc
++
++# Allow time warps so that the Erlang system time can more closely match the
++# OS system time.
+++C multi_time_warp
++
++## Load code at system startup
++## See http://erlang.org/doc/system_principles/system_principles.html#code-loading-strategy
++-mode embedded
++
++## Disable scheduler busy wait to reduce idle CPU usage and avoid delaying
++## other OS processes. See http://erlang.org/doc/man/erl.html#+sbwt
+++sbwt none
+++sbwtdcpu none
+++sbwtdio none
++
++## Save the shell history between reboots
++## See http://erlang.org/doc/man/kernel_app.html for additional options
++-kernel shell_history enabled
++
++## Enable heartbeat monitoring of the Erlang runtime system
++-heart -env HEART_BEAT_TIMEOUT 30
++
++## Start the Elixir shell
++
++-noshell
++-user Elixir.IEx.CLI
++
++## Enable colors in the shell
++-elixir ansi_enabled true
++
++## Options added after -extra are interpreted as plain arguments and can be
++## retrieved using :init.get_plain_arguments(). Options before the "--" are
++## interpreted by Elixir and anything afterwards is left around for other IEx
++## and user applications.
++-extra --no-halt
++--
++--dot-iex /etc/iex.exs
++
+diff --git a/projects/nerves/1.10.1/base/rootfs_overlay/etc/iex.exs rootfs_overlay/etc/iex.exs
+new file mode 100644
+index 0000000..5cccb30
+--- /dev/null
++++ rootfs_overlay/etc/iex.exs
+@@ -0,0 +1,15 @@
++# Add Toolshed helpers to the IEx session
++use Toolshed
++
++if RingLogger in Application.get_env(:logger, :backends, []) do
++  IO.puts("""
++  RingLogger is collecting log messages from Elixir and Linux. To see the
++  messages, either attach the current IEx session to the logger:
++
++    RingLogger.attach
++
++  or print the next messages in the log:
++
++    RingLogger.next
++  """)
++end

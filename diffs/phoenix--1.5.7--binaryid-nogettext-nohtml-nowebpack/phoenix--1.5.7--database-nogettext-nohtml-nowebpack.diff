@@ -1,0 +1,68 @@
+diff --git config/config.exs config/config.exs
+index 4a28872..819aaf2 100644
+--- config/config.exs
++++ config/config.exs
+@@ -8,8 +8,7 @@
+ use Mix.Config
+ 
+ config :my_app,
+-  ecto_repos: [MyApp.Repo],
+-  generators: [binary_id: true]
++  ecto_repos: [MyApp.Repo]
+ 
+ # Configures the endpoint
+ config :my_app, MyAppWeb.Endpoint,
+diff --git config/dev.exs config/dev.exs
+index 9befbc1..1c95771 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -2,8 +2,8 @@ use Mix.Config
+ 
+ # Configure your database
+ config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
++  username: "root",
++  password: "",
+   database: "my_app_dev",
+   hostname: "localhost",
+   show_sensitive_data_on_connection_error: true,
+diff --git config/test.exs config/test.exs
+index 5589099..e4a57c1 100644
+--- config/test.exs
++++ config/test.exs
+@@ -6,8 +6,8 @@ use Mix.Config
+ # to provide built-in test partitioning in CI environment.
+ # Run `mix help test` for more information.
+ config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
++  username: "root",
++  password: "",
+   database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
+   hostname: "localhost",
+   pool: Ecto.Adapters.SQL.Sandbox
+diff --git lib/my_app/repo.ex lib/my_app/repo.ex
+index 595ff57..c623d89 100644
+--- lib/my_app/repo.ex
++++ lib/my_app/repo.ex
+@@ -1,5 +1,5 @@
+ defmodule MyApp.Repo do
+   use Ecto.Repo,
+     otp_app: :my_app,
+-    adapter: Ecto.Adapters.Postgres
++    adapter: Ecto.Adapters.MyXQL
+ end
+diff --git mix.exs mix.exs
+index f040fd8..f2ad798 100644
+--- mix.exs
++++ mix.exs
+@@ -36,7 +36,7 @@ defmodule MyApp.MixProject do
+       {:phoenix, "~> 1.5.7"},
+       {:phoenix_ecto, "~> 4.1"},
+       {:ecto_sql, "~> 3.4"},
+-      {:postgrex, ">= 0.0.0"},
++      {:myxql, ">= 0.0.0"},
+       {:phoenix_live_dashboard, "~> 0.4"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},

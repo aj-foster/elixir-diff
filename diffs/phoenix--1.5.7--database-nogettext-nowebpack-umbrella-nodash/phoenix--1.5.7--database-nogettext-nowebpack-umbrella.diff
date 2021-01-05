@@ -1,0 +1,84 @@
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index 195da31..e220aa9 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,13 +7,15 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "77YwaTcv"
++    signing_salt: "s18kc4/0"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+     websocket: true,
+     longpoll: false
+ 
++  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
++
+   # Serve at "/" the static files from "priv/static" directory.
+   #
+   # You should set gzip to true if you are running phx.digest
+@@ -33,6 +35,10 @@ defmodule MyAppWeb.Endpoint do
+     plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app_web
+   end
+ 
++  plug Phoenix.LiveDashboard.RequestLogger,
++    param_key: "request_logger",
++    cookie_key: "request_logger"
++
+   plug Plug.RequestId
+   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+ 
+diff --git apps/my_app_web/lib/my_app_web/router.ex apps/my_app_web/lib/my_app_web/router.ex
+index 8309276..b65151f 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ apps/my_app_web/lib/my_app_web/router.ex
+@@ -23,4 +23,20 @@ defmodule MyAppWeb.Router do
+   # scope "/api", MyAppWeb do
+   #   pipe_through :api
+   # end
++
++  # Enables LiveDashboard only for development
++  #
++  # If you want to use the LiveDashboard in production, you should put
++  # it behind authentication and allow only admins to access it.
++  # If your application does not have an admins-only section yet,
++  # you can use Plug.BasicAuth to set up some basic authentication
++  # as long as you are also using SSL (which you should anyway).
++  if Mix.env() in [:dev, :test] do
++    import Phoenix.LiveDashboard.Router
++
++    scope "/" do
++      pipe_through :browser
++      live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
++    end
++  end
+ end
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+index 981504d..83d4670 100644
+--- apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
++++ apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+@@ -14,7 +14,9 @@
+         <nav role="navigation">
+           <ul>
+             <li><a href="https://hexdocs.pm/phoenix/overview.html">Get Started</a></li>
+-            
++            <%= if function_exported?(Routes, :live_dashboard_path, 2) do %>
++              <li><%= link "LiveDashboard", to: Routes.live_dashboard_path(@conn, :home) %></li>
++            <% end %>
+           </ul>
+         </nav>
+         <a href="https://phoenixframework.org/" class="phx-logo">
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index a822bc7..639b1ec 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -41,6 +41,7 @@ defmodule MyAppWeb.MixProject do
+       {:phoenix_ecto, "~> 4.0"},
+       {:phoenix_html, "~> 2.11"},
+       {:phoenix_live_reload, "~> 1.2", only: :dev},
++      {:phoenix_live_dashboard, "~> 0.4"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+       {:my_app, in_umbrella: true},

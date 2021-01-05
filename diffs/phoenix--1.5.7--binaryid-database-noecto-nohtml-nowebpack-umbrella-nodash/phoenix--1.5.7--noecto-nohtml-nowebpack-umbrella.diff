@@ -1,0 +1,82 @@
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index 7a11866..c56d836 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,13 +7,15 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "W74r0dns"
++    signing_salt: "skqsWJw1"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+     websocket: true,
+     longpoll: false
+ 
++  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
++
+   # Serve at "/" the static files from "priv/static" directory.
+   #
+   # You should set gzip to true if you are running phx.digest
+@@ -30,6 +32,10 @@ defmodule MyAppWeb.Endpoint do
+     plug Phoenix.CodeReloader
+   end
+ 
++  plug Phoenix.LiveDashboard.RequestLogger,
++    param_key: "request_logger",
++    cookie_key: "request_logger"
++
+   plug Plug.RequestId
+   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+ 
+diff --git apps/my_app_web/lib/my_app_web/router.ex apps/my_app_web/lib/my_app_web/router.ex
+index 5f5f6fc..4abdff1 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ apps/my_app_web/lib/my_app_web/router.ex
+@@ -8,4 +8,20 @@ defmodule MyAppWeb.Router do
+   scope "/api", MyAppWeb do
+     pipe_through :api
+   end
++
++  # Enables LiveDashboard only for development
++  #
++  # If you want to use the LiveDashboard in production, you should put
++  # it behind authentication and allow only admins to access it.
++  # If your application does not have an admins-only section yet,
++  # you can use Plug.BasicAuth to set up some basic authentication
++  # as long as you are also using SSL (which you should anyway).
++  if Mix.env() in [:dev, :test] do
++    import Phoenix.LiveDashboard.Router
++
++    scope "/" do
++      pipe_through [:fetch_session, :protect_from_forgery]
++      live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
++    end
++  end
+ end
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index 5e03132..4da7d08 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -38,6 +38,7 @@ defmodule MyAppWeb.MixProject do
+   defp deps do
+     [
+       {:phoenix, "~> 1.5.7"},
++      {:phoenix_live_dashboard, "~> 0.4"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+       {:gettext, "~> 0.11"},
+diff --git config/config.exs config/config.exs
+index b6d8a6c..f0c7234 100644
+--- config/config.exs
++++ config/config.exs
+@@ -12,7 +12,7 @@ use Mix.Config
+ 
+ 
+ config :my_app_web,
+-  generators: [context_app: :my_app, binary_id: true]
++  generators: [context_app: :my_app]
+ 
+ # Configures the endpoint
+ config :my_app_web, MyAppWeb.Endpoint,

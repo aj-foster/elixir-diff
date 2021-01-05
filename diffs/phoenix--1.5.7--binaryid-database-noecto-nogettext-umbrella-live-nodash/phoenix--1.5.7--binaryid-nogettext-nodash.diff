@@ -1,0 +1,1500 @@
+diff --git .formatter.exs .formatter.exs
+index 6915976..8a6391c 100644
+--- .formatter.exs
++++ .formatter.exs
+@@ -1,4 +1,5 @@
+ [
+-  inputs: ["mix.exs", "config/*.exs"],
+-  subdirectories: ["apps/*"]
++  import_deps: [:ecto, :phoenix],
++  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
++  subdirectories: ["priv/*/migrations"]
+ ]
+diff --git .gitignore .gitignore
+index 12179ea..8b3a72e 100644
+--- .gitignore
++++ .gitignore
+@@ -18,3 +18,17 @@ erl_crash.dump
+ 
+ # Also ignore archive artifacts (built via "mix archive.build").
+ *.ez
++
++# Ignore package tarball (built via "mix hex.build").
++my_app-*.tar
++
++# If NPM crashes, it generates a log, let's ignore it too.
++npm-debug.log
++
++# The directory NPM downloads your dependencies sources to.
++/assets/node_modules/
++
++# Since we are building assets from assets/,
++# we ignore priv/static. You may want to comment
++# this depending on your deployment strategy.
++/priv/static/
+diff --git README.md README.md
+index 729adca..8e838c3 100644
+--- README.md
++++ README.md
+@@ -1 +1,20 @@
+-# MyApp.Umbrella
++# MyApp
++
++To start your Phoenix server:
++
++  * Install dependencies with `mix deps.get`
++  * Create and migrate your database with `mix ecto.setup`
++  * Install Node.js dependencies with `npm install` inside the `assets` directory
++  * Start Phoenix endpoint with `mix phx.server`
++
++Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
++
++Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
++
++## Learn more
++
++  * Official website: https://www.phoenixframework.org/
++  * Guides: https://hexdocs.pm/phoenix/overview.html
++  * Docs: https://hexdocs.pm/phoenix
++  * Forum: https://elixirforum.com/c/phoenix-forum
++  * Source: https://github.com/phoenixframework/phoenix
+diff --git apps/my_app/.formatter.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app/.formatter.exs
+deleted file mode 100644
+index 3d8ce11..0000000
+--- apps/my_app/.formatter.exs
++++ /dev/null
+@@ -1,3 +0,0 @@
+-[
+-  inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
+-]
+diff --git apps/my_app/.gitignore b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app/.gitignore
+deleted file mode 100644
+index 992da6d..0000000
+--- apps/my_app/.gitignore
++++ /dev/null
+@@ -1,23 +0,0 @@
+-# The directory Mix will write compiled artifacts to.
+-/_build/
+-
+-# If you run "mix test --cover", coverage assets end up here.
+-/cover/
+-
+-# The directory Mix downloads your dependencies sources to.
+-/deps/
+-
+-# Where 3rd-party dependencies like ExDoc output generated docs.
+-/doc/
+-
+-# Ignore .fetch files in case you like to edit your project deps locally.
+-/.fetch
+-
+-# If the VM crashes, it generates a dump, let's ignore it too.
+-erl_crash.dump
+-
+-# Also ignore archive artifacts (built via "mix archive.build").
+-*.ez
+-
+-# Ignore package tarball (built via "mix hex.build").
+-my_app-*.tar
+diff --git apps/my_app/README.md b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app/README.md
+deleted file mode 100644
+index 4a0521a..0000000
+--- apps/my_app/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# MyApp
+-
+-**TODO: Add description**
+diff --git apps/my_app/lib/my_app/application.ex b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app/lib/my_app/application.ex
+deleted file mode 100644
+index d968a2f..0000000
+--- apps/my_app/lib/my_app/application.ex
++++ /dev/null
+@@ -1,18 +0,0 @@
+-defmodule MyApp.Application do
+-  # See https://hexdocs.pm/elixir/Application.html
+-  # for more information on OTP Applications
+-  @moduledoc false
+-
+-  use Application
+-
+-  def start(_type, _args) do
+-    children = [
+-      # Start the PubSub system
+-      {Phoenix.PubSub, name: MyApp.PubSub}
+-      # Start a worker by calling: MyApp.Worker.start_link(arg)
+-      # {MyApp.Worker, arg}
+-    ]
+-
+-    Supervisor.start_link(children, strategy: :one_for_one, name: MyApp.Supervisor)
+-  end
+-end
+diff --git apps/my_app/mix.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app/mix.exs
+deleted file mode 100644
+index 07cf694..0000000
+--- apps/my_app/mix.exs
++++ /dev/null
+@@ -1,51 +0,0 @@
+-defmodule MyApp.MixProject do
+-  use Mix.Project
+-
+-  def project do
+-    [
+-      app: :my_app,
+-      version: "0.1.0",
+-      build_path: "../../_build",
+-      config_path: "../../config/config.exs",
+-      deps_path: "../../deps",
+-      lockfile: "../../mix.lock",
+-      elixir: "~> 1.7",
+-      elixirc_paths: elixirc_paths(Mix.env()),
+-      start_permanent: Mix.env() == :prod,
+-      aliases: aliases(),
+-      deps: deps()
+-    ]
+-  end
+-
+-  # Configuration for the OTP application.
+-  #
+-  # Type `mix help compile.app` for more information.
+-  def application do
+-    [
+-      mod: {MyApp.Application, []},
+-      extra_applications: [:logger, :runtime_tools]
+-    ]
+-  end
+-
+-  # Specifies which paths to compile per environment.
+-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+-  defp elixirc_paths(_), do: ["lib"]
+-
+-  # Specifies your project dependencies.
+-  #
+-  # Type `mix help deps` for examples and options.
+-  defp deps do
+-    [
+-      {:phoenix_pubsub, "~> 2.0"}
+-    ]
+-  end
+-
+-  # Aliases are shortcuts or tasks specific to the current project.
+-  #
+-  # See the documentation for `Mix` for more info on aliases.
+-  defp aliases do
+-    [
+-      setup: ["deps.get"]
+-    ]
+-  end
+-end
+diff --git apps/my_app/test/test_helper.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app/test/test_helper.exs
+deleted file mode 100644
+index 869559e..0000000
+--- apps/my_app/test/test_helper.exs
++++ /dev/null
+@@ -1 +0,0 @@
+-ExUnit.start()
+diff --git apps/my_app_web/.formatter.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/.formatter.exs
+deleted file mode 100644
+index 4761678..0000000
+--- apps/my_app_web/.formatter.exs
++++ /dev/null
+@@ -1,4 +0,0 @@
+-[
+-  import_deps: [:phoenix],
+-  inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
+-]
+diff --git apps/my_app_web/.gitignore b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/.gitignore
+deleted file mode 100644
+index 5f1d967..0000000
+--- apps/my_app_web/.gitignore
++++ /dev/null
+@@ -1,34 +0,0 @@
+-# The directory Mix will write compiled artifacts to.
+-/_build/
+-
+-# If you run "mix test --cover", coverage assets end up here.
+-/cover/
+-
+-# The directory Mix downloads your dependencies sources to.
+-/deps/
+-
+-# Where 3rd-party dependencies like ExDoc output generated docs.
+-/doc/
+-
+-# Ignore .fetch files in case you like to edit your project deps locally.
+-/.fetch
+-
+-# If the VM crashes, it generates a dump, let's ignore it too.
+-erl_crash.dump
+-
+-# Also ignore archive artifacts (built via "mix archive.build").
+-*.ez
+-
+-# Ignore package tarball (built via "mix hex.build").
+-my_app_web-*.tar
+-
+-# If NPM crashes, it generates a log, let's ignore it too.
+-npm-debug.log
+-
+-# The directory NPM downloads your dependencies sources to.
+-/assets/node_modules/
+-
+-# Since we are building assets from assets/,
+-# we ignore priv/static. You may want to comment
+-# this depending on your deployment strategy.
+-/priv/static/
+diff --git apps/my_app_web/README.md b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/README.md
+deleted file mode 100644
+index 6d4b014..0000000
+--- apps/my_app_web/README.md
++++ /dev/null
+@@ -1,19 +0,0 @@
+-# MyAppWeb
+-
+-To start your Phoenix server:
+-
+-  * Install dependencies with `mix deps.get`
+-  * Install Node.js dependencies with `npm install` inside the `assets` directory
+-  * Start Phoenix endpoint with `mix phx.server`
+-
+-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+-
+-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+-
+-## Learn more
+-
+-  * Official website: https://www.phoenixframework.org/
+-  * Guides: https://hexdocs.pm/phoenix/overview.html
+-  * Docs: https://hexdocs.pm/phoenix
+-  * Forum: https://elixirforum.com/c/phoenix-forum
+-  * Source: https://github.com/phoenixframework/phoenix
+diff --git apps/my_app_web/assets/css/app.scss b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/css/app.scss
+deleted file mode 100644
+index f7775db..0000000
+--- apps/my_app_web/assets/css/app.scss
++++ /dev/null
+@@ -1,91 +0,0 @@
+-/* This file is for your main application css. */
+-@import "./phoenix.css";
+-@import "../node_modules/nprogress/nprogress.css";
+-
+-/* LiveView specific classes for your customizations */
+-.phx-no-feedback.invalid-feedback,
+-.phx-no-feedback .invalid-feedback {
+-  display: none;
+-}
+-
+-.phx-click-loading {
+-  opacity: 0.5;
+-  transition: opacity 1s ease-out;
+-}
+-
+-.phx-disconnected{
+-  cursor: wait;
+-}
+-.phx-disconnected *{
+-  pointer-events: none;
+-}
+-
+-.phx-modal {
+-  opacity: 1!important;
+-  position: fixed;
+-  z-index: 1;
+-  left: 0;
+-  top: 0;
+-  width: 100%;
+-  height: 100%;
+-  overflow: auto;
+-  background-color: rgb(0,0,0);
+-  background-color: rgba(0,0,0,0.4);
+-}
+-
+-.phx-modal-content {
+-  background-color: #fefefe;
+-  margin: 15% auto;
+-  padding: 20px;
+-  border: 1px solid #888;
+-  width: 80%;
+-}
+-
+-.phx-modal-close {
+-  color: #aaa;
+-  float: right;
+-  font-size: 28px;
+-  font-weight: bold;
+-}
+-
+-.phx-modal-close:hover,
+-.phx-modal-close:focus {
+-  color: black;
+-  text-decoration: none;
+-  cursor: pointer;
+-}
+-
+-
+-/* Alerts and form errors */
+-.alert {
+-  padding: 15px;
+-  margin-bottom: 20px;
+-  border: 1px solid transparent;
+-  border-radius: 4px;
+-}
+-.alert-info {
+-  color: #31708f;
+-  background-color: #d9edf7;
+-  border-color: #bce8f1;
+-}
+-.alert-warning {
+-  color: #8a6d3b;
+-  background-color: #fcf8e3;
+-  border-color: #faebcc;
+-}
+-.alert-danger {
+-  color: #a94442;
+-  background-color: #f2dede;
+-  border-color: #ebccd1;
+-}
+-.alert p {
+-  margin-bottom: 0;
+-}
+-.alert:empty {
+-  display: none;
+-}
+-.invalid-feedback {
+-  color: #a94442;
+-  display: block;
+-  margin: -1rem 0 2rem;
+-}
+diff --git apps/my_app_web/assets/js/app.js b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/js/app.js
+deleted file mode 100644
+index dfc0f97..0000000
+--- apps/my_app_web/assets/js/app.js
++++ /dev/null
+@@ -1,35 +0,0 @@
+-// We need to import the CSS so that webpack will load it.
+-// The MiniCssExtractPlugin is used to separate it out into
+-// its own CSS file.
+-import "../css/app.scss"
+-
+-// webpack automatically bundles all modules in your
+-// entry points. Those entry points can be configured
+-// in "webpack.config.js".
+-//
+-// Import deps with the dep name or local files with a relative path, for example:
+-//
+-//     import {Socket} from "phoenix"
+-//     import socket from "./socket"
+-//
+-import "phoenix_html"
+-import {Socket} from "phoenix"
+-import NProgress from "nprogress"
+-import {LiveSocket} from "phoenix_live_view"
+-
+-let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+-let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}})
+-
+-// Show progress bar on live navigation and form submits
+-window.addEventListener("phx:page-loading-start", info => NProgress.start())
+-window.addEventListener("phx:page-loading-stop", info => NProgress.done())
+-
+-// connect if there are any LiveViews on the page
+-liveSocket.connect()
+-
+-// expose liveSocket on window for web console debug logs and latency simulation:
+-// >> liveSocket.enableDebug()
+-// >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
+-// >> liveSocket.disableLatencySim()
+-window.liveSocket = liveSocket
+-
+diff --git apps/my_app_web/lib/my_app_web/live/page_live.ex b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/live/page_live.ex
+deleted file mode 100644
+index 1d75b57..0000000
+--- apps/my_app_web/lib/my_app_web/live/page_live.ex
++++ /dev/null
+@@ -1,39 +0,0 @@
+-defmodule MyAppWeb.PageLive do
+-  use MyAppWeb, :live_view
+-
+-  @impl true
+-  def mount(_params, _session, socket) do
+-    {:ok, assign(socket, query: "", results: %{})}
+-  end
+-
+-  @impl true
+-  def handle_event("suggest", %{"q" => query}, socket) do
+-    {:noreply, assign(socket, results: search(query), query: query)}
+-  end
+-
+-  @impl true
+-  def handle_event("search", %{"q" => query}, socket) do
+-    case search(query) do
+-      %{^query => vsn} ->
+-        {:noreply, redirect(socket, external: "https://hexdocs.pm/#{query}/#{vsn}")}
+-
+-      _ ->
+-        {:noreply,
+-         socket
+-         |> put_flash(:error, "No dependencies found matching \"#{query}\"")
+-         |> assign(results: %{}, query: query)}
+-    end
+-  end
+-
+-  defp search(query) do
+-    if not MyAppWeb.Endpoint.config(:code_reloader) do
+-      raise "action disabled when not in development"
+-    end
+-
+-    for {app, desc, vsn} <- Application.started_applications(),
+-        app = to_string(app),
+-        String.starts_with?(app, query) and not List.starts_with?(desc, ~c"ERTS"),
+-        into: %{},
+-        do: {app, vsn}
+-  end
+-end
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+deleted file mode 100644
+index 09ffdad..0000000
+--- apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
++++ /dev/null
+@@ -1,5 +0,0 @@
+-<main role="main" class="container">
+-  <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+-  <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+-  <%= @inner_content %>
+-</main>
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex
+deleted file mode 100644
+index 8dcded5..0000000
+--- apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex
++++ /dev/null
+@@ -1,11 +0,0 @@
+-<main role="main" class="container">
+-  <p class="alert alert-info" role="alert"
+-    phx-click="lv:clear-flash"
+-    phx-value-key="info"><%= live_flash(@flash, :info) %></p>
+-
+-  <p class="alert alert-danger" role="alert"
+-    phx-click="lv:clear-flash"
+-    phx-value-key="error"><%= live_flash(@flash, :error) %></p>
+-
+-  <%= @inner_content %>
+-</main>
+diff --git apps/my_app_web/mix.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/mix.exs
+deleted file mode 100644
+index fb098ea..0000000
+--- apps/my_app_web/mix.exs
++++ /dev/null
+@@ -1,61 +0,0 @@
+-defmodule MyAppWeb.MixProject do
+-  use Mix.Project
+-
+-  def project do
+-    [
+-      app: :my_app_web,
+-      version: "0.1.0",
+-      build_path: "../../_build",
+-      config_path: "../../config/config.exs",
+-      deps_path: "../../deps",
+-      lockfile: "../../mix.lock",
+-      elixir: "~> 1.7",
+-      elixirc_paths: elixirc_paths(Mix.env()),
+-      compilers: [:phoenix] ++ Mix.compilers(),
+-      start_permanent: Mix.env() == :prod,
+-      aliases: aliases(),
+-      deps: deps()
+-    ]
+-  end
+-
+-  # Configuration for the OTP application.
+-  #
+-  # Type `mix help compile.app` for more information.
+-  def application do
+-    [
+-      mod: {MyAppWeb.Application, []},
+-      extra_applications: [:logger, :runtime_tools]
+-    ]
+-  end
+-
+-  # Specifies which paths to compile per environment.
+-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+-  defp elixirc_paths(_), do: ["lib"]
+-
+-  # Specifies your project dependencies.
+-  #
+-  # Type `mix help deps` for examples and options.
+-  defp deps do
+-    [
+-      {:phoenix, "~> 1.5.7"},
+-      {:phoenix_live_view, "~> 0.15.0"},
+-      {:floki, ">= 0.27.0", only: :test},
+-      {:phoenix_html, "~> 2.11"},
+-      {:phoenix_live_reload, "~> 1.2", only: :dev},
+-      {:telemetry_metrics, "~> 0.4"},
+-      {:telemetry_poller, "~> 0.4"},
+-      {:my_app, in_umbrella: true},
+-      {:jason, "~> 1.0"},
+-      {:plug_cowboy, "~> 2.0"}
+-    ]
+-  end
+-
+-  # Aliases are shortcuts or tasks specific to the current project.
+-  #
+-  # See the documentation for `Mix` for more info on aliases.
+-  defp aliases do
+-    [
+-      setup: ["deps.get", "cmd npm install --prefix assets"]
+-    ]
+-  end
+-end
+diff --git apps/my_app_web/test/my_app_web/live/page_live_test.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/test/my_app_web/live/page_live_test.exs
+deleted file mode 100644
+index 7d971b0..0000000
+--- apps/my_app_web/test/my_app_web/live/page_live_test.exs
++++ /dev/null
+@@ -1,11 +0,0 @@
+-defmodule MyAppWeb.PageLiveTest do
+-  use MyAppWeb.ConnCase
+-
+-  import Phoenix.LiveViewTest
+-
+-  test "disconnected and connected render", %{conn: conn} do
+-    {:ok, page_live, disconnected_html} = live(conn, "/")
+-    assert disconnected_html =~ "Welcome to Phoenix!"
+-    assert render(page_live) =~ "Welcome to Phoenix!"
+-  end
+-end
+diff --git apps/my_app_web/test/test_helper.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/test/test_helper.exs
+deleted file mode 100644
+index 869559e..0000000
+--- apps/my_app_web/test/test_helper.exs
++++ /dev/null
+@@ -1 +0,0 @@
+-ExUnit.start()
+diff --git apps/my_app_web/assets/.babelrc assets/.babelrc
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/.babelrc
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/.babelrc
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/css/app.scss assets/css/app.scss
+new file mode 100644
+index 0000000..5c2c9b5
+--- /dev/null
++++ assets/css/app.scss
+@@ -0,0 +1,36 @@
++/* This file is for your main application css. */
++@import "./phoenix.css";
++
++/* Alerts and form errors */
++.alert {
++  padding: 15px;
++  margin-bottom: 20px;
++  border: 1px solid transparent;
++  border-radius: 4px;
++}
++.alert-info {
++  color: #31708f;
++  background-color: #d9edf7;
++  border-color: #bce8f1;
++}
++.alert-warning {
++  color: #8a6d3b;
++  background-color: #fcf8e3;
++  border-color: #faebcc;
++}
++.alert-danger {
++  color: #a94442;
++  background-color: #f2dede;
++  border-color: #ebccd1;
++}
++.alert p {
++  margin-bottom: 0;
++}
++.alert:empty {
++  display: none;
++}
++.invalid-feedback {
++  color: #a94442;
++  display: block;
++  margin: -1rem 0 2rem;
++}
+diff --git apps/my_app_web/assets/css/phoenix.css assets/css/phoenix.css
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/css/phoenix.css
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/css/phoenix.css
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/js/app.js assets/js/app.js
+new file mode 100644
+index 0000000..af00596
+--- /dev/null
++++ assets/js/app.js
+@@ -0,0 +1,15 @@
++// We need to import the CSS so that webpack will load it.
++// The MiniCssExtractPlugin is used to separate it out into
++// its own CSS file.
++import "../css/app.scss"
++
++// webpack automatically bundles all modules in your
++// entry points. Those entry points can be configured
++// in "webpack.config.js".
++//
++// Import deps with the dep name or local files with a relative path, for example:
++//
++//     import {Socket} from "phoenix"
++//     import socket from "./socket"
++//
++import "phoenix_html"
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/js/socket.js assets/js/socket.js
+new file mode 100644
+index 0000000..09929ab
+--- /dev/null
++++ assets/js/socket.js
+@@ -0,0 +1,63 @@
++// NOTE: The contents of this file will only be executed if
++// you uncomment its entry in "assets/js/app.js".
++
++// To use Phoenix channels, the first step is to import Socket,
++// and connect at the socket path in "lib/web/endpoint.ex".
++//
++// Pass the token on params as below. Or remove it
++// from the params if you are not using authentication.
++import {Socket} from "phoenix"
++
++let socket = new Socket("/socket", {params: {token: window.userToken}})
++
++// When you connect, you'll often need to authenticate the client.
++// For example, imagine you have an authentication plug, `MyAuth`,
++// which authenticates the session and assigns a `:current_user`.
++// If the current user exists you can assign the user's token in
++// the connection for use in the layout.
++//
++// In your "lib/web/router.ex":
++//
++//     pipeline :browser do
++//       ...
++//       plug MyAuth
++//       plug :put_user_token
++//     end
++//
++//     defp put_user_token(conn, _) do
++//       if current_user = conn.assigns[:current_user] do
++//         token = Phoenix.Token.sign(conn, "user socket", current_user.id)
++//         assign(conn, :user_token, token)
++//       else
++//         conn
++//       end
++//     end
++//
++// Now you need to pass this token to JavaScript. You can do so
++// inside a script tag in "lib/web/templates/layout/app.html.eex":
++//
++//     <script>window.userToken = "<%= assigns[:user_token] %>";</script>
++//
++// You will need to verify the user token in the "connect/3" function
++// in "lib/web/channels/user_socket.ex":
++//
++//     def connect(%{"token" => token}, socket, _connect_info) do
++//       # max_age: 1209600 is equivalent to two weeks in seconds
++//       case Phoenix.Token.verify(socket, "user socket", token, max_age: 1209600) do
++//         {:ok, user_id} ->
++//           {:ok, assign(socket, :user, user_id)}
++//         {:error, reason} ->
++//           :error
++//       end
++//     end
++//
++// Finally, connect to the socket:
++socket.connect()
++
++// Now that you are connected, you can join channels with a topic:
++let channel = socket.channel("topic:subtopic", {})
++channel.join()
++  .receive("ok", resp => { console.log("Joined successfully", resp) })
++  .receive("error", resp => { console.log("Unable to join", resp) })
++
++export default socket
+diff --git apps/my_app_web/assets/package.json assets/package.json
+similarity index 77%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/package.json
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/package.json
+index e68e844..170b4d5 100644
+--- apps/my_app_web/assets/package.json
++++ assets/package.json
+@@ -7,10 +7,8 @@
+     "watch": "webpack --mode development --watch"
+   },
+   "dependencies": {
+-    "phoenix": "file:../../../deps/phoenix",
+-    "phoenix_html": "file:../../../deps/phoenix_html",
+-    "phoenix_live_view": "file:../../../deps/phoenix_live_view",
+-    "nprogress": "^0.2.0"
++    "phoenix": "file:../deps/phoenix",
++    "phoenix_html": "file:../deps/phoenix_html"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.0.0",
+diff --git apps/my_app_web/assets/static/favicon.ico assets/static/favicon.ico
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/static/favicon.ico
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/static/favicon.ico
+diff --git apps/my_app_web/assets/static/images/phoenix.png assets/static/images/phoenix.png
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/static/images/phoenix.png
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/static/images/phoenix.png
+diff --git apps/my_app_web/assets/static/robots.txt assets/static/robots.txt
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/static/robots.txt
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/static/robots.txt
+diff --git apps/my_app_web/assets/webpack.config.js assets/webpack.config.js
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/assets/webpack.config.js
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/assets/webpack.config.js
+diff --git config/config.exs config/config.exs
+index 173ca58..cdd0d02 100644
+--- config/config.exs
++++ config/config.exs
+@@ -1,21 +1,18 @@
+-# This file is responsible for configuring your umbrella
+-# and **all applications** and their dependencies with the
+-# help of Mix.Config.
++# This file is responsible for configuring your application
++# and its dependencies with the aid of the Mix.Config module.
+ #
+-# Note that all applications in your umbrella share the
+-# same configuration and dependencies, which is why they
+-# all use the same configuration file. If you want different
+-# configurations or dependencies per app, it is best to
+-# move said applications out of the umbrella.
+-use Mix.Config
+-
++# This configuration file is loaded before any dependency and
++# is restricted to this project.
+ 
++# General application configuration
++use Mix.Config
+ 
+-config :my_app_web,
+-  generators: [context_app: :my_app, binary_id: true]
++config :my_app,
++  ecto_repos: [MyApp.Repo],
++  generators: [binary_id: true]
+ 
+ # Configures the endpoint
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   url: [host: "localhost"],
+   secret_key_base: "[redacted]",
+   render_errors: [view: MyAppWeb.ErrorView, accepts: ~w(html json), layout: false],
+diff --git config/dev.exs config/dev.exs
+index 407b9f8..153fa9a 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -1,12 +1,21 @@
+ use Mix.Config
+ 
++# Configure your database
++config :my_app, MyApp.Repo,
++  username: "postgres",
++  password: "postgres",
++  database: "my_app_dev",
++  hostname: "localhost",
++  show_sensitive_data_on_connection_error: true,
++  pool_size: 10
++
+ # For development, we disable any cache and enable
+ # debugging and code reloading.
+ #
+ # The watchers configuration can be used to run external
+ # watchers to your application. For example, we use it
+ # with webpack to recompile .js and .css sources.
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   http: [port: 4000],
+   debug_errors: true,
+   code_reloader: true,
+@@ -17,7 +26,7 @@ config :my_app_web, MyAppWeb.Endpoint,
+       "--mode",
+       "development",
+       "--watch-stdin",
+-      cd: Path.expand("../apps/my_app_web/assets", __DIR__)
++      cd: Path.expand("../assets", __DIR__)
+     ]
+   ]
+ 
+@@ -46,7 +55,7 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # different ports.
+ 
+ # Watch static and templates for browser reloading.
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   live_reload: [
+     patterns: [
+       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
+@@ -58,9 +67,9 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # Do not include metadata nor timestamps in development logs
+ config :logger, :console, format: "[$level] $message\n"
+ 
+-# Initialize plugs at runtime for faster development compilation
+-config :phoenix, :plug_init_mode, :runtime
+-
+ # Set a higher stacktrace during development. Avoid configuring such
+ # in production as building large stacktraces may be expensive.
+ config :phoenix, :stacktrace_depth, 20
++
++# Initialize plugs at runtime for faster development compilation
++config :phoenix, :plug_init_mode, :runtime
+diff --git config/prod.exs config/prod.exs
+index 8310ab5..7443cb4 100644
+--- config/prod.exs
++++ config/prod.exs
+@@ -9,16 +9,19 @@ use Mix.Config
+ # manifest is generated by the `mix phx.digest` task,
+ # which you should run after static files are built and
+ # before starting your production server.
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   url: [host: "example.com", port: 80],
+   cache_static_manifest: "priv/static/cache_manifest.json"
+ 
++# Do not print debug messages in production
++config :logger, level: :info
++
+ # ## SSL Support
+ #
+ # To get SSL working, you will need to add the `https` key
+ # to the previous section and set your `:url` port to 443:
+ #
+-#     config :my_app_web, MyAppWeb.Endpoint,
++#     config :my_app, MyAppWeb.Endpoint,
+ #       ...
+ #       url: [host: "example.com", port: 443],
+ #       https: [
+@@ -42,14 +45,11 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # We also recommend setting `force_ssl` in your endpoint, ensuring
+ # no data is ever sent via http, always redirecting to https:
+ #
+-#     config :my_app_web, MyAppWeb.Endpoint,
++#     config :my_app, MyAppWeb.Endpoint,
+ #       force_ssl: [hsts: true]
+ #
+ # Check `Plug.SSL` for all available options in `force_ssl`.
+ 
+-# Do not print debug messages in production
+-config :logger, level: :info
+-
+ # Finally import the config/prod.secret.exs which loads secrets
+ # and configuration from environment variables.
+ import_config "prod.secret.exs"
+diff --git config/prod.secret.exs config/prod.secret.exs
+index 702c128..968473e 100644
+--- config/prod.secret.exs
++++ config/prod.secret.exs
+@@ -4,6 +4,18 @@
+ # remember to add this file to your .gitignore.
+ use Mix.Config
+ 
++database_url =
++  System.get_env("DATABASE_URL") ||
++    raise """
++    environment variable DATABASE_URL is missing.
++    For example: ecto://USER:PASS@HOST/DATABASE
++    """
++
++config :my_app, MyApp.Repo,
++  # ssl: true,
++  url: database_url,
++  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
++
+ secret_key_base =
+   System.get_env("SECRET_KEY_BASE") ||
+     raise """
+@@ -11,7 +23,7 @@ secret_key_base =
+     You can generate one by calling: mix phx.gen.secret
+     """
+ 
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   http: [
+     port: String.to_integer(System.get_env("PORT") || "4000"),
+     transport_options: [socket_opts: [:inet6]]
+@@ -23,7 +35,7 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # If you are doing OTP releases, you need to instruct Phoenix
+ # to start each relevant endpoint:
+ #
+-#     config :my_app_web, MyAppWeb.Endpoint, server: true
++#     config :my_app, MyAppWeb.Endpoint, server: true
+ #
+ # Then you can assemble a release by calling `mix release`.
+ # See `mix help release` for more information.
+diff --git config/test.exs config/test.exs
+index 8fd529b..5589099 100644
+--- config/test.exs
++++ config/test.exs
+@@ -1,8 +1,20 @@
+ use Mix.Config
+ 
++# Configure your database
++#
++# The MIX_TEST_PARTITION environment variable can be used
++# to provide built-in test partitioning in CI environment.
++# Run `mix help test` for more information.
++config :my_app, MyApp.Repo,
++  username: "postgres",
++  password: "postgres",
++  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
++  hostname: "localhost",
++  pool: Ecto.Adapters.SQL.Sandbox
++
+ # We don't run a server during test. If one is required,
+ # you can enable the server option below.
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   http: [port: 4002],
+   server: false
+ 
+diff --git apps/my_app_web/lib/my_app_web/application.ex lib/my_app/application.ex
+similarity index 68%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/application.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app/application.ex
+index fbdce53..fd03945 100644
+--- apps/my_app_web/lib/my_app_web/application.ex
++++ lib/my_app/application.ex
+@@ -1,4 +1,4 @@
+-defmodule MyAppWeb.Application do
++defmodule MyApp.Application do
+   # See https://hexdocs.pm/elixir/Application.html
+   # for more information on OTP Applications
+   @moduledoc false
+@@ -7,17 +7,21 @@ defmodule MyAppWeb.Application do
+ 
+   def start(_type, _args) do
+     children = [
++      # Start the Ecto repository
++      MyApp.Repo,
+       # Start the Telemetry supervisor
+       MyAppWeb.Telemetry,
++      # Start the PubSub system
++      {Phoenix.PubSub, name: MyApp.PubSub},
+       # Start the Endpoint (http/https)
+       MyAppWeb.Endpoint
+-      # Start a worker by calling: MyAppWeb.Worker.start_link(arg)
+-      # {MyAppWeb.Worker, arg}
++      # Start a worker by calling: MyApp.Worker.start_link(arg)
++      # {MyApp.Worker, arg}
+     ]
+ 
+     # See https://hexdocs.pm/elixir/Supervisor.html
+     # for other strategies and supported options
+-    opts = [strategy: :one_for_one, name: MyAppWeb.Supervisor]
++    opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+     Supervisor.start_link(children, opts)
+   end
+ 
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app/repo.ex lib/my_app/repo.ex
+new file mode 100644
+index 0000000..595ff57
+--- /dev/null
++++ lib/my_app/repo.ex
+@@ -0,0 +1,5 @@
++defmodule MyApp.Repo do
++  use Ecto.Repo,
++    otp_app: :my_app,
++    adapter: Ecto.Adapters.Postgres
++end
+diff --git apps/my_app/lib/my_app.ex lib/my_app.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app/lib/my_app.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app.ex
+diff --git apps/my_app_web/lib/my_app_web/channels/user_socket.ex lib/my_app_web/channels/user_socket.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/channels/user_socket.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/channels/user_socket.ex
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/controllers/page_controller.ex lib/my_app_web/controllers/page_controller.ex
+new file mode 100644
+index 0000000..9628848
+--- /dev/null
++++ lib/my_app_web/controllers/page_controller.ex
+@@ -0,0 +1,7 @@
++defmodule MyAppWeb.PageController do
++  use MyAppWeb, :controller
++
++  def index(conn, _params) do
++    render(conn, "index.html")
++  end
++end
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex lib/my_app_web/endpoint.ex
+similarity index 84%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/endpoint.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/endpoint.ex
+index 66935db..b8baf9a 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ lib/my_app_web/endpoint.ex
+@@ -1,28 +1,26 @@
+ defmodule MyAppWeb.Endpoint do
+-  use Phoenix.Endpoint, otp_app: :my_app_web
++  use Phoenix.Endpoint, otp_app: :my_app
+ 
+   # The session will be stored in the cookie and signed,
+   # this means its contents can be read but not tampered with.
+   # Set :encryption_salt if you would also like to encrypt it.
+   @session_options [
+     store: :cookie,
+-    key: "_my_app_web_key",
+-    signing_salt: "Knlk5tki"
++    key: "_my_app_key",
++    signing_salt: "[redacted]"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+     websocket: true,
+     longpoll: false
+ 
+-  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
+-
+   # Serve at "/" the static files from "priv/static" directory.
+   #
+   # You should set gzip to true if you are running phx.digest
+   # when deploying your static files in production.
+   plug Plug.Static,
+     at: "/",
+-    from: :my_app_web,
++    from: :my_app,
+     gzip: false,
+     only: ~w(css fonts images js favicon.ico robots.txt)
+ 
+@@ -32,6 +30,7 @@ defmodule MyAppWeb.Endpoint do
+     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+     plug Phoenix.LiveReloader
+     plug Phoenix.CodeReloader
++    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app
+   end
+ 
+   plug Plug.RequestId
+diff --git apps/my_app_web/lib/my_app_web/router.ex lib/my_app_web/router.ex
+similarity index 78%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/router.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/router.ex
+index d7a49da..8309276 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ lib/my_app_web/router.ex
+@@ -4,8 +4,7 @@ defmodule MyAppWeb.Router do
+   pipeline :browser do
+     plug :accepts, ["html"]
+     plug :fetch_session
+-    plug :fetch_live_flash
+-    plug :put_root_layout, {MyAppWeb.LayoutView, :root}
++    plug :fetch_flash
+     plug :protect_from_forgery
+     plug :put_secure_browser_headers
+   end
+@@ -17,7 +16,7 @@ defmodule MyAppWeb.Router do
+   scope "/", MyAppWeb do
+     pipe_through :browser
+ 
+-    live "/", PageLive, :index
++    get "/", PageController, :index
+   end
+ 
+   # Other scopes may use custom stacks.
+diff --git apps/my_app_web/lib/my_app_web/telemetry.ex lib/my_app_web/telemetry.ex
+similarity index 77%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/telemetry.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/telemetry.ex
+index 9f50f3d..2c9c8ae 100644
+--- apps/my_app_web/lib/my_app_web/telemetry.ex
++++ lib/my_app_web/telemetry.ex
+@@ -30,6 +30,13 @@ defmodule MyAppWeb.Telemetry do
+         unit: {:native, :millisecond}
+       ),
+ 
++      # Database Metrics
++      summary("my_app.repo.query.total_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.decode_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.query_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.queue_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.idle_time", unit: {:native, :millisecond}),
++
+       # VM Metrics
+       summary("vm.memory.total", unit: {:byte, :kilobyte}),
+       summary("vm.total_run_queue_lengths.total"),
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex lib/my_app_web/templates/layout/app.html.eex
+similarity index 58%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/templates/layout/app.html.eex
+index d3b97a7..981504d 100644
+--- apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
++++ lib/my_app_web/templates/layout/app.html.eex
+@@ -4,10 +4,9 @@
+     <meta charset="utf-8"/>
+     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+-    <%= csrf_meta_tag() %>
+-    <%= live_title_tag assigns[:page_title] || "MyApp", suffix: " · Phoenix Framework" %>
+-    <link phx-track-static rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
+-    <script defer phx-track-static type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
++    <title>MyApp · Phoenix Framework</title>
++    <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
++    <script defer type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
+   </head>
+   <body>
+     <header>
+@@ -23,6 +22,10 @@
+         </a>
+       </section>
+     </header>
+-    <%= @inner_content %>
++    <main role="main" class="container">
++      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
++      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
++      <%= @inner_content %>
++    </main>
+   </body>
+ </html>
+diff --git apps/my_app_web/lib/my_app_web/live/page_live.html.leex lib/my_app_web/templates/page/index.html.eex
+similarity index 71%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/live/page_live.html.leex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/templates/page/index.html.eex
+index f116c9c..479197d 100644
+--- apps/my_app_web/lib/my_app_web/live/page_live.html.leex
++++ lib/my_app_web/templates/page/index.html.eex
+@@ -1,16 +1,6 @@
+ <section class="phx-hero">
+   <h1>Welcome to Phoenix!</h1>
+   <p>Peace of mind from prototype to production</p>
+-
+-  <form phx-change="suggest" phx-submit="search">
+-    <input type="text" name="q" value="<%= @query %>" placeholder="Live dependency search" list="results" autocomplete="off"/>
+-    <datalist id="results">
+-      <%= for {app, _vsn} <- @results do %>
+-        <option value="<%= app %>"><%= app %></option>
+-      <% end %>
+-    </datalist>
+-    <button type="submit" phx-disable-with="Searching...">Go to Hexdocs</button>
+-  </form>
+ </section>
+ 
+ <section class="row">
+diff --git apps/my_app_web/lib/my_app_web/views/error_helpers.ex lib/my_app_web/views/error_helpers.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/views/error_helpers.ex
+diff --git apps/my_app_web/lib/my_app_web/views/error_view.ex lib/my_app_web/views/error_view.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/views/error_view.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/views/error_view.ex
+diff --git apps/my_app_web/lib/my_app_web/views/layout_view.ex lib/my_app_web/views/layout_view.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/views/layout_view.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/views/layout_view.ex
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web/views/page_view.ex lib/my_app_web/views/page_view.ex
+new file mode 100644
+index 0000000..3385fda
+--- /dev/null
++++ lib/my_app_web/views/page_view.ex
+@@ -0,0 +1,3 @@
++defmodule MyAppWeb.PageView do
++  use MyAppWeb, :view
++end
+diff --git apps/my_app_web/lib/my_app_web.ex lib/my_app_web.ex
+similarity index 80%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/lib/my_app_web.ex
+index f3f5856..7a894e8 100644
+--- apps/my_app_web/lib/my_app_web.ex
++++ lib/my_app_web.ex
+@@ -41,30 +41,12 @@ defmodule MyAppWeb do
+     end
+   end
+ 
+-  def live_view do
+-    quote do
+-      use Phoenix.LiveView,
+-        layout: {MyAppWeb.LayoutView, "live.html"}
+-
+-      unquote(view_helpers())
+-    end
+-  end
+-
+-  def live_component do
+-    quote do
+-      use Phoenix.LiveComponent
+-
+-      unquote(view_helpers())
+-    end
+-  end
+-
+   def router do
+     quote do
+       use Phoenix.Router
+ 
+       import Plug.Conn
+       import Phoenix.Controller
+-      import Phoenix.LiveView.Router
+     end
+   end
+ 
+@@ -79,9 +61,6 @@ defmodule MyAppWeb do
+       # Use all HTML functionality (forms, tags, etc)
+       use Phoenix.HTML
+ 
+-      # Import LiveView helpers (live_render, live_component, live_patch, etc)
+-      import Phoenix.LiveView.Helpers
+-
+       # Import basic rendering functionality (render, render_layout, etc)
+       import Phoenix.View
+ 
+diff --git mix.exs mix.exs
+index 099c509..a8b8be8 100644
+--- mix.exs
++++ mix.exs
+@@ -1,30 +1,49 @@
+-defmodule MyApp.Umbrella.MixProject do
++defmodule MyApp.MixProject do
+   use Mix.Project
+ 
+   def project do
+     [
+-      apps_path: "apps",
++      app: :my_app,
+       version: "0.1.0",
++      elixir: "~> 1.7",
++      elixirc_paths: elixirc_paths(Mix.env()),
++      compilers: [:phoenix] ++ Mix.compilers(),
+       start_permanent: Mix.env() == :prod,
+-      deps: deps(),
+-      aliases: aliases()
++      aliases: aliases(),
++      deps: deps()
+     ]
+   end
+ 
+-  # Dependencies can be Hex packages:
++  # Configuration for the OTP application.
+   #
+-  #   {:mydep, "~> 0.3.0"}
+-  #
+-  # Or git/path repositories:
+-  #
+-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
+-  #
+-  # Type "mix help deps" for more examples and options.
++  # Type `mix help compile.app` for more information.
++  def application do
++    [
++      mod: {MyApp.Application, []},
++      extra_applications: [:logger, :runtime_tools]
++    ]
++  end
++
++  # Specifies which paths to compile per environment.
++  defp elixirc_paths(:test), do: ["lib", "test/support"]
++  defp elixirc_paths(_), do: ["lib"]
++
++  # Specifies your project dependencies.
+   #
+-  # Dependencies listed here are available only for this project
+-  # and cannot be accessed from applications inside the apps/ folder.
++  # Type `mix help deps` for examples and options.
+   defp deps do
+-    []
++    [
++      {:phoenix, "~> 1.5.7"},
++      {:phoenix_ecto, "~> 4.1"},
++      {:ecto_sql, "~> 3.4"},
++      {:postgrex, ">= 0.0.0"},
++      {:phoenix_html, "~> 2.11"},
++      {:phoenix_live_reload, "~> 1.2", only: :dev},
++      {:telemetry_metrics, "~> 0.4"},
++      {:telemetry_poller, "~> 0.4"},
++      {:jason, "~> 1.0"},
++      {:plug_cowboy, "~> 2.0"}
++    ]
+   end
+ 
+   # Aliases are shortcuts or tasks specific to the current project.
+@@ -33,13 +52,12 @@ defmodule MyApp.Umbrella.MixProject do
+   #     $ mix setup
+   #
+   # See the documentation for `Mix` for more info on aliases.
+-  #
+-  # Aliases listed here are available only for this project
+-  # and cannot be accessed from applications inside the apps/ folder.
+   defp aliases do
+     [
+-      # run `mix setup` in all child apps
+-      setup: ["cmd mix setup"]
++      setup: ["deps.get", "ecto.setup", "cmd npm install --prefix assets"],
++      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
++      "ecto.reset": ["ecto.drop", "ecto.setup"],
++      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+     ]
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/priv/repo/migrations/.formatter.exs priv/repo/migrations/.formatter.exs
+new file mode 100644
+index 0000000..49f9151
+--- /dev/null
++++ priv/repo/migrations/.formatter.exs
+@@ -0,0 +1,4 @@
++[
++  import_deps: [:ecto_sql],
++  inputs: ["*.exs"]
++]
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/priv/repo/seeds.exs priv/repo/seeds.exs
+new file mode 100644
+index 0000000..e4ba004
+--- /dev/null
++++ priv/repo/seeds.exs
+@@ -0,0 +1,11 @@
++# Script for populating the database. You can run it as:
++#
++#     mix run priv/repo/seeds.exs
++#
++# Inside the script, you can read and write to any of your
++# repositories directly:
++#
++#     MyApp.Repo.insert!(%MyApp.SomeSchema{})
++#
++# We recommend using the bang functions (`insert!`, `update!`
++# and so on) as they will fail if something goes wrong.
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/test/my_app_web/controllers/page_controller_test.exs test/my_app_web/controllers/page_controller_test.exs
+new file mode 100644
+index 0000000..5c16b7f
+--- /dev/null
++++ test/my_app_web/controllers/page_controller_test.exs
+@@ -0,0 +1,8 @@
++defmodule MyAppWeb.PageControllerTest do
++  use MyAppWeb.ConnCase
++
++  test "GET /", %{conn: conn} do
++    conn = get(conn, "/")
++    assert html_response(conn, 200) =~ "Welcome to Phoenix!"
++  end
++end
+diff --git apps/my_app_web/test/my_app_web/views/error_view_test.exs test/my_app_web/views/error_view_test.exs
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/test/my_app_web/views/error_view_test.exs
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/test/my_app_web/views/error_view_test.exs
+diff --git apps/my_app_web/test/my_app_web/views/layout_view_test.exs test/my_app_web/views/layout_view_test.exs
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/test/my_app_web/views/layout_view_test.exs
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/test/my_app_web/views/layout_view_test.exs
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/test/my_app_web/views/page_view_test.exs test/my_app_web/views/page_view_test.exs
+new file mode 100644
+index 0000000..82612dc
+--- /dev/null
++++ test/my_app_web/views/page_view_test.exs
+@@ -0,0 +1,3 @@
++defmodule MyAppWeb.PageViewTest do
++  use MyAppWeb.ConnCase, async: true
++end
+diff --git apps/my_app_web/test/support/channel_case.ex test/support/channel_case.ex
+similarity index 83%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/test/support/channel_case.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/test/support/channel_case.ex
+index 2a1dfdb..831b300 100644
+--- apps/my_app_web/test/support/channel_case.ex
++++ test/support/channel_case.ex
+@@ -28,7 +28,13 @@ defmodule MyAppWeb.ChannelCase do
+     end
+   end
+ 
+-  setup _tags do
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
+     :ok
+   end
+ end
+diff --git apps/my_app_web/test/support/conn_case.ex test/support/conn_case.ex
+similarity index 85%
+rename from projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/test/support/conn_case.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nodash/test/support/conn_case.ex
+index ae658eb..a1d99dc 100644
+--- apps/my_app_web/test/support/conn_case.ex
++++ test/support/conn_case.ex
+@@ -31,7 +31,13 @@ defmodule MyAppWeb.ConnCase do
+     end
+   end
+ 
+-  setup _tags do
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
+     {:ok, conn: Phoenix.ConnTest.build_conn()}
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/test/support/data_case.ex test/support/data_case.ex
+new file mode 100644
+index 0000000..774d271
+--- /dev/null
++++ test/support/data_case.ex
+@@ -0,0 +1,55 @@
++defmodule MyApp.DataCase do
++  @moduledoc """
++  This module defines the setup for tests requiring
++  access to the application's data layer.
++
++  You may define functions here to be used as helpers in
++  your tests.
++
++  Finally, if the test case interacts with the database,
++  we enable the SQL sandbox, so changes done to the database
++  are reverted at the end of every test. If you are using
++  PostgreSQL, you can even run database tests asynchronously
++  by setting `use MyApp.DataCase, async: true`, although
++  this option is not recommended for other databases.
++  """
++
++  use ExUnit.CaseTemplate
++
++  using do
++    quote do
++      alias MyApp.Repo
++
++      import Ecto
++      import Ecto.Changeset
++      import Ecto.Query
++      import MyApp.DataCase
++    end
++  end
++
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
++    :ok
++  end
++
++  @doc """
++  A helper that transforms changeset errors into a map of messages.
++
++      assert {:error, changeset} = Accounts.create_user(%{password: "short"})
++      assert "password is too short" in errors_on(changeset).password
++      assert %{password: ["password is too short"]} = errors_on(changeset)
++
++  """
++  def errors_on(changeset) do
++    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
++      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
++        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
++      end)
++    end)
++  end
++end
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nodash/test/test_helper.exs test/test_helper.exs
+new file mode 100644
+index 0000000..0491a89
+--- /dev/null
++++ test/test_helper.exs
+@@ -0,0 +1,2 @@
++ExUnit.start()
++Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)

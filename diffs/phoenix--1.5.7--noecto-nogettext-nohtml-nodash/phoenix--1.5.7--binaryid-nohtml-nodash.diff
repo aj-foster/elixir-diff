@@ -1,0 +1,629 @@
+diff --git .formatter.exs .formatter.exs
+index 4761678..8a6391c 100644
+--- .formatter.exs
++++ .formatter.exs
+@@ -1,4 +1,5 @@
+ [
+-  import_deps: [:phoenix],
+-  inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
++  import_deps: [:ecto, :phoenix],
++  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
++  subdirectories: ["priv/*/migrations"]
+ ]
+diff --git README.md README.md
+index 0d08a74..8e838c3 100644
+--- README.md
++++ README.md
+@@ -3,6 +3,7 @@
+ To start your Phoenix server:
+ 
+   * Install dependencies with `mix deps.get`
++  * Create and migrate your database with `mix ecto.setup`
+   * Install Node.js dependencies with `npm install` inside the `assets` directory
+   * Start Phoenix endpoint with `mix phx.server`
+ 
+diff --git config/config.exs config/config.exs
+index 3a38fed..4a28872 100644
+--- config/config.exs
++++ config/config.exs
+@@ -7,6 +7,10 @@
+ # General application configuration
+ use Mix.Config
+ 
++config :my_app,
++  ecto_repos: [MyApp.Repo],
++  generators: [binary_id: true]
++
+ # Configures the endpoint
+ config :my_app, MyAppWeb.Endpoint,
+   url: [host: "localhost"],
+diff --git config/dev.exs config/dev.exs
+index de05c41..43cba2f 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -1,5 +1,14 @@
+ use Mix.Config
+ 
++# Configure your database
++config :my_app, MyApp.Repo,
++  username: "postgres",
++  password: "postgres",
++  database: "my_app_dev",
++  hostname: "localhost",
++  show_sensitive_data_on_connection_error: true,
++  pool_size: 10
++
+ # For development, we disable any cache and enable
+ # debugging and code reloading.
+ #
+diff --git config/prod.secret.exs config/prod.secret.exs
+index 3568fa4..968473e 100644
+--- config/prod.secret.exs
++++ config/prod.secret.exs
+@@ -4,6 +4,18 @@
+ # remember to add this file to your .gitignore.
+ use Mix.Config
+ 
++database_url =
++  System.get_env("DATABASE_URL") ||
++    raise """
++    environment variable DATABASE_URL is missing.
++    For example: ecto://USER:PASS@HOST/DATABASE
++    """
++
++config :my_app, MyApp.Repo,
++  # ssl: true,
++  url: database_url,
++  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
++
+ secret_key_base =
+   System.get_env("SECRET_KEY_BASE") ||
+     raise """
+diff --git config/test.exs config/test.exs
+index d363390..5589099 100644
+--- config/test.exs
++++ config/test.exs
+@@ -1,5 +1,17 @@
+ use Mix.Config
+ 
++# Configure your database
++#
++# The MIX_TEST_PARTITION environment variable can be used
++# to provide built-in test partitioning in CI environment.
++# Run `mix help test` for more information.
++config :my_app, MyApp.Repo,
++  username: "postgres",
++  password: "postgres",
++  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
++  hostname: "localhost",
++  pool: Ecto.Adapters.SQL.Sandbox
++
+ # We don't run a server during test. If one is required,
+ # you can enable the server option below.
+ config :my_app, MyAppWeb.Endpoint,
+diff --git lib/my_app/application.ex lib/my_app/application.ex
+index 9ecbdae..fd03945 100644
+--- lib/my_app/application.ex
++++ lib/my_app/application.ex
+@@ -7,6 +7,8 @@ defmodule MyApp.Application do
+ 
+   def start(_type, _args) do
+     children = [
++      # Start the Ecto repository
++      MyApp.Repo,
+       # Start the Telemetry supervisor
+       MyAppWeb.Telemetry,
+       # Start the PubSub system
+diff --git a/projects/phoenix/1.5.7/binaryid-nohtml-nodash/lib/my_app/repo.ex lib/my_app/repo.ex
+new file mode 100644
+index 0000000..595ff57
+--- /dev/null
++++ lib/my_app/repo.ex
+@@ -0,0 +1,5 @@
++defmodule MyApp.Repo do
++  use Ecto.Repo,
++    otp_app: :my_app,
++    adapter: Ecto.Adapters.Postgres
++end
+diff --git lib/my_app_web/endpoint.ex lib/my_app_web/endpoint.ex
+index 85a4675..8e2fda4 100644
+--- lib/my_app_web/endpoint.ex
++++ lib/my_app_web/endpoint.ex
+@@ -28,6 +28,7 @@ defmodule MyAppWeb.Endpoint do
+   # :code_reloader configuration of your endpoint.
+   if code_reloading? do
+     plug Phoenix.CodeReloader
++    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app
+   end
+ 
+   plug Plug.RequestId
+diff --git a/projects/phoenix/1.5.7/binaryid-nohtml-nodash/lib/my_app_web/gettext.ex lib/my_app_web/gettext.ex
+new file mode 100644
+index 0000000..7919b97
+--- /dev/null
++++ lib/my_app_web/gettext.ex
+@@ -0,0 +1,24 @@
++defmodule MyAppWeb.Gettext do
++  @moduledoc """
++  A module providing Internationalization with a gettext-based API.
++
++  By using [Gettext](https://hexdocs.pm/gettext),
++  your module gains a set of macros for translations, for example:
++
++      import MyAppWeb.Gettext
++
++      # Simple translation
++      gettext("Here is the string to translate")
++
++      # Plural translation
++      ngettext("Here is the string to translate",
++               "Here are the strings to translate",
++               3)
++
++      # Domain-based translation
++      dgettext("errors", "Here is the error message to translate")
++
++  See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
++  """
++  use Gettext, otp_app: :my_app
++end
+diff --git lib/my_app_web/telemetry.ex lib/my_app_web/telemetry.ex
+index 9f50f3d..2c9c8ae 100644
+--- lib/my_app_web/telemetry.ex
++++ lib/my_app_web/telemetry.ex
+@@ -30,6 +30,13 @@ defmodule MyAppWeb.Telemetry do
+         unit: {:native, :millisecond}
+       ),
+ 
++      # Database Metrics
++      summary("my_app.repo.query.total_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.decode_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.query_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.queue_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.idle_time", unit: {:native, :millisecond}),
++
+       # VM Metrics
+       summary("vm.memory.total", unit: {:byte, :kilobyte}),
+       summary("vm.total_run_queue_lengths.total"),
+diff --git lib/my_app_web/views/error_helpers.ex lib/my_app_web/views/error_helpers.ex
+index dd1c1c4..1882f7f 100644
+--- lib/my_app_web/views/error_helpers.ex
++++ lib/my_app_web/views/error_helpers.ex
+@@ -4,13 +4,30 @@ defmodule MyAppWeb.ErrorHelpers do
+   """
+ 
+   @doc """
+-  Translates an error message.
++  Translates an error message using gettext.
+   """
+   def translate_error({msg, opts}) do
++    # When using gettext, we typically pass the strings we want
++    # to translate as a static argument:
++    #
++    #     # Translate "is invalid" in the "errors" domain
++    #     dgettext("errors", "is invalid")
++    #
++    #     # Translate the number of files with plural rules
++    #     dngettext("errors", "1 file", "%{count} files", count)
++    #
+     # Because the error messages we show in our forms and APIs
+     # are defined inside Ecto, we need to translate them dynamically.
+-    Enum.reduce(opts, msg, fn {key, value}, acc ->
+-      String.replace(acc, "%{#{key}}", to_string(value))
+-    end)
++    # This requires us to call the Gettext module passing our gettext
++    # backend as first argument.
++    #
++    # Note we use the "errors" domain, which means translations
++    # should be written to the errors.po file. The :count option is
++    # set by Ecto and indicates we should also apply plural rules.
++    if count = opts[:count] do
++      Gettext.dngettext(MyAppWeb.Gettext, "errors", msg, msg, count, opts)
++    else
++      Gettext.dgettext(MyAppWeb.Gettext, "errors", msg, opts)
++    end
+   end
+ end
+diff --git lib/my_app_web.ex lib/my_app_web.ex
+index 1f75dac..7af6bb3 100644
+--- lib/my_app_web.ex
++++ lib/my_app_web.ex
+@@ -22,6 +22,7 @@ defmodule MyAppWeb do
+       use Phoenix.Controller, namespace: MyAppWeb
+ 
+       import Plug.Conn
++      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+@@ -53,6 +54,7 @@ defmodule MyAppWeb do
+   def channel do
+     quote do
+       use Phoenix.Channel
++      import MyAppWeb.Gettext
+     end
+   end
+ 
+@@ -62,6 +64,7 @@ defmodule MyAppWeb do
+       import Phoenix.View
+ 
+       import MyAppWeb.ErrorHelpers
++      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+diff --git mix.exs mix.exs
+index 62c4824..2866e32 100644
+--- mix.exs
++++ mix.exs
+@@ -7,7 +7,7 @@ defmodule MyApp.MixProject do
+       version: "0.1.0",
+       elixir: "~> 1.7",
+       elixirc_paths: elixirc_paths(Mix.env()),
+-      compilers: [:phoenix] ++ Mix.compilers(),
++      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
+       start_permanent: Mix.env() == :prod,
+       aliases: aliases(),
+       deps: deps()
+@@ -34,8 +34,12 @@ defmodule MyApp.MixProject do
+   defp deps do
+     [
+       {:phoenix, "~> 1.5.7"},
++      {:phoenix_ecto, "~> 4.1"},
++      {:ecto_sql, "~> 3.4"},
++      {:postgrex, ">= 0.0.0"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
++      {:gettext, "~> 0.11"},
+       {:jason, "~> 1.0"},
+       {:plug_cowboy, "~> 2.0"}
+     ]
+@@ -49,7 +53,10 @@ defmodule MyApp.MixProject do
+   # See the documentation for `Mix` for more info on aliases.
+   defp aliases do
+     [
+-      setup: ["deps.get", "cmd npm install --prefix assets"]
++      setup: ["deps.get", "ecto.setup", "cmd npm install --prefix assets"],
++      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
++      "ecto.reset": ["ecto.drop", "ecto.setup"],
++      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+     ]
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/binaryid-nohtml-nodash/priv/gettext/en/LC_MESSAGES/errors.po priv/gettext/en/LC_MESSAGES/errors.po
+new file mode 100644
+index 0000000..a589998
+--- /dev/null
++++ priv/gettext/en/LC_MESSAGES/errors.po
+@@ -0,0 +1,97 @@
++## `msgid`s in this file come from POT (.pot) files.
++##
++## Do not add, change, or remove `msgid`s manually here as
++## they're tied to the ones in the corresponding POT file
++## (with the same domain).
++##
++## Use `mix gettext.extract --merge` or `mix gettext.merge`
++## to merge POT files into PO files.
++msgid ""
++msgstr ""
++"Language: en\n"
++
++## From Ecto.Changeset.cast/4
++msgid "can't be blank"
++msgstr ""
++
++## From Ecto.Changeset.unique_constraint/3
++msgid "has already been taken"
++msgstr ""
++
++## From Ecto.Changeset.put_change/3
++msgid "is invalid"
++msgstr ""
++
++## From Ecto.Changeset.validate_acceptance/3
++msgid "must be accepted"
++msgstr ""
++
++## From Ecto.Changeset.validate_format/3
++msgid "has invalid format"
++msgstr ""
++
++## From Ecto.Changeset.validate_subset/3
++msgid "has an invalid entry"
++msgstr ""
++
++## From Ecto.Changeset.validate_exclusion/3
++msgid "is reserved"
++msgstr ""
++
++## From Ecto.Changeset.validate_confirmation/3
++msgid "does not match confirmation"
++msgstr ""
++
++## From Ecto.Changeset.no_assoc_constraint/3
++msgid "is still associated with this entry"
++msgstr ""
++
++msgid "are still associated with this entry"
++msgstr ""
++
++## From Ecto.Changeset.validate_length/3
++msgid "should be %{count} character(s)"
++msgid_plural "should be %{count} character(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should have %{count} item(s)"
++msgid_plural "should have %{count} item(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should be at least %{count} character(s)"
++msgid_plural "should be at least %{count} character(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should have at least %{count} item(s)"
++msgid_plural "should have at least %{count} item(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should be at most %{count} character(s)"
++msgid_plural "should be at most %{count} character(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should have at most %{count} item(s)"
++msgid_plural "should have at most %{count} item(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++## From Ecto.Changeset.validate_number/3
++msgid "must be less than %{number}"
++msgstr ""
++
++msgid "must be greater than %{number}"
++msgstr ""
++
++msgid "must be less than or equal to %{number}"
++msgstr ""
++
++msgid "must be greater than or equal to %{number}"
++msgstr ""
++
++msgid "must be equal to %{number}"
++msgstr ""
+diff --git a/projects/phoenix/1.5.7/binaryid-nohtml-nodash/priv/gettext/errors.pot priv/gettext/errors.pot
+new file mode 100644
+index 0000000..39a220b
+--- /dev/null
++++ priv/gettext/errors.pot
+@@ -0,0 +1,95 @@
++## This is a PO Template file.
++##
++## `msgid`s here are often extracted from source code.
++## Add new translations manually only if they're dynamic
++## translations that can't be statically extracted.
++##
++## Run `mix gettext.extract` to bring this file up to
++## date. Leave `msgstr`s empty as changing them here has no
++## effect: edit them in PO (`.po`) files instead.
++
++## From Ecto.Changeset.cast/4
++msgid "can't be blank"
++msgstr ""
++
++## From Ecto.Changeset.unique_constraint/3
++msgid "has already been taken"
++msgstr ""
++
++## From Ecto.Changeset.put_change/3
++msgid "is invalid"
++msgstr ""
++
++## From Ecto.Changeset.validate_acceptance/3
++msgid "must be accepted"
++msgstr ""
++
++## From Ecto.Changeset.validate_format/3
++msgid "has invalid format"
++msgstr ""
++
++## From Ecto.Changeset.validate_subset/3
++msgid "has an invalid entry"
++msgstr ""
++
++## From Ecto.Changeset.validate_exclusion/3
++msgid "is reserved"
++msgstr ""
++
++## From Ecto.Changeset.validate_confirmation/3
++msgid "does not match confirmation"
++msgstr ""
++
++## From Ecto.Changeset.no_assoc_constraint/3
++msgid "is still associated with this entry"
++msgstr ""
++
++msgid "are still associated with this entry"
++msgstr ""
++
++## From Ecto.Changeset.validate_length/3
++msgid "should be %{count} character(s)"
++msgid_plural "should be %{count} character(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should have %{count} item(s)"
++msgid_plural "should have %{count} item(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should be at least %{count} character(s)"
++msgid_plural "should be at least %{count} character(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should have at least %{count} item(s)"
++msgid_plural "should have at least %{count} item(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should be at most %{count} character(s)"
++msgid_plural "should be at most %{count} character(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++msgid "should have at most %{count} item(s)"
++msgid_plural "should have at most %{count} item(s)"
++msgstr[0] ""
++msgstr[1] ""
++
++## From Ecto.Changeset.validate_number/3
++msgid "must be less than %{number}"
++msgstr ""
++
++msgid "must be greater than %{number}"
++msgstr ""
++
++msgid "must be less than or equal to %{number}"
++msgstr ""
++
++msgid "must be greater than or equal to %{number}"
++msgstr ""
++
++msgid "must be equal to %{number}"
++msgstr ""
+diff --git a/projects/phoenix/1.5.7/binaryid-nohtml-nodash/priv/repo/migrations/.formatter.exs priv/repo/migrations/.formatter.exs
+new file mode 100644
+index 0000000..49f9151
+--- /dev/null
++++ priv/repo/migrations/.formatter.exs
+@@ -0,0 +1,4 @@
++[
++  import_deps: [:ecto_sql],
++  inputs: ["*.exs"]
++]
+diff --git a/projects/phoenix/1.5.7/binaryid-nohtml-nodash/priv/repo/seeds.exs priv/repo/seeds.exs
+new file mode 100644
+index 0000000..e4ba004
+--- /dev/null
++++ priv/repo/seeds.exs
+@@ -0,0 +1,11 @@
++# Script for populating the database. You can run it as:
++#
++#     mix run priv/repo/seeds.exs
++#
++# Inside the script, you can read and write to any of your
++# repositories directly:
++#
++#     MyApp.Repo.insert!(%MyApp.SomeSchema{})
++#
++# We recommend using the bang functions (`insert!`, `update!`
++# and so on) as they will fail if something goes wrong.
+diff --git test/support/channel_case.ex test/support/channel_case.ex
+index 2a1dfdb..831b300 100644
+--- test/support/channel_case.ex
++++ test/support/channel_case.ex
+@@ -28,7 +28,13 @@ defmodule MyAppWeb.ChannelCase do
+     end
+   end
+ 
+-  setup _tags do
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
+     :ok
+   end
+ end
+diff --git test/support/conn_case.ex test/support/conn_case.ex
+index ae658eb..a1d99dc 100644
+--- test/support/conn_case.ex
++++ test/support/conn_case.ex
+@@ -31,7 +31,13 @@ defmodule MyAppWeb.ConnCase do
+     end
+   end
+ 
+-  setup _tags do
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
+     {:ok, conn: Phoenix.ConnTest.build_conn()}
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/binaryid-nohtml-nodash/test/support/data_case.ex test/support/data_case.ex
+new file mode 100644
+index 0000000..774d271
+--- /dev/null
++++ test/support/data_case.ex
+@@ -0,0 +1,55 @@
++defmodule MyApp.DataCase do
++  @moduledoc """
++  This module defines the setup for tests requiring
++  access to the application's data layer.
++
++  You may define functions here to be used as helpers in
++  your tests.
++
++  Finally, if the test case interacts with the database,
++  we enable the SQL sandbox, so changes done to the database
++  are reverted at the end of every test. If you are using
++  PostgreSQL, you can even run database tests asynchronously
++  by setting `use MyApp.DataCase, async: true`, although
++  this option is not recommended for other databases.
++  """
++
++  use ExUnit.CaseTemplate
++
++  using do
++    quote do
++      alias MyApp.Repo
++
++      import Ecto
++      import Ecto.Changeset
++      import Ecto.Query
++      import MyApp.DataCase
++    end
++  end
++
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
++    :ok
++  end
++
++  @doc """
++  A helper that transforms changeset errors into a map of messages.
++
++      assert {:error, changeset} = Accounts.create_user(%{password: "short"})
++      assert "password is too short" in errors_on(changeset).password
++      assert %{password: ["password is too short"]} = errors_on(changeset)
++
++  """
++  def errors_on(changeset) do
++    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
++      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
++        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
++      end)
++    end)
++  end
++end
+diff --git test/test_helper.exs test/test_helper.exs
+index 869559e..0491a89 100644
+--- test/test_helper.exs
++++ test/test_helper.exs
+@@ -1 +1,2 @@
+ ExUnit.start()
++Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)

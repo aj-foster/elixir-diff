@@ -1,0 +1,1793 @@
+diff --git .formatter.exs .formatter.exs
+index 6915976..8a6391c 100644
+--- .formatter.exs
++++ .formatter.exs
+@@ -1,4 +1,5 @@
+ [
+-  inputs: ["mix.exs", "config/*.exs"],
+-  subdirectories: ["apps/*"]
++  import_deps: [:ecto, :phoenix],
++  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
++  subdirectories: ["priv/*/migrations"]
+ ]
+diff --git .gitignore .gitignore
+index 12179ea..be002d1 100644
+--- .gitignore
++++ .gitignore
+@@ -18,3 +18,11 @@ erl_crash.dump
+ 
+ # Also ignore archive artifacts (built via "mix archive.build").
+ *.ez
++
++# Ignore package tarball (built via "mix hex.build").
++my_app-*.tar
++
++# Since we are building assets from assets/,
++# we ignore priv/static. You may want to comment
++# this depending on your deployment strategy.
++/priv/static/
+diff --git README.md README.md
+index 729adca..f59887f 100644
+--- README.md
++++ README.md
+@@ -1 +1,19 @@
+-# MyApp.Umbrella
++# MyApp
++
++To start your Phoenix server:
++
++  * Install dependencies with `mix deps.get`
++  * Create and migrate your database with `mix ecto.setup`
++  * Start Phoenix endpoint with `mix phx.server`
++
++Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
++
++Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
++
++## Learn more
++
++  * Official website: https://www.phoenixframework.org/
++  * Guides: https://hexdocs.pm/phoenix/overview.html
++  * Docs: https://hexdocs.pm/phoenix
++  * Forum: https://elixirforum.com/c/phoenix-forum
++  * Source: https://github.com/phoenixframework/phoenix
+diff --git apps/my_app/.formatter.exs b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/.formatter.exs
+deleted file mode 100644
+index db86148..0000000
+--- apps/my_app/.formatter.exs
++++ /dev/null
+@@ -1,5 +0,0 @@
+-[
+-  import_deps: [:ecto],
+-  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
+-  subdirectories: ["priv/*/migrations"]
+-]
+diff --git apps/my_app/.gitignore b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/.gitignore
+deleted file mode 100644
+index 992da6d..0000000
+--- apps/my_app/.gitignore
++++ /dev/null
+@@ -1,23 +0,0 @@
+-# The directory Mix will write compiled artifacts to.
+-/_build/
+-
+-# If you run "mix test --cover", coverage assets end up here.
+-/cover/
+-
+-# The directory Mix downloads your dependencies sources to.
+-/deps/
+-
+-# Where 3rd-party dependencies like ExDoc output generated docs.
+-/doc/
+-
+-# Ignore .fetch files in case you like to edit your project deps locally.
+-/.fetch
+-
+-# If the VM crashes, it generates a dump, let's ignore it too.
+-erl_crash.dump
+-
+-# Also ignore archive artifacts (built via "mix archive.build").
+-*.ez
+-
+-# Ignore package tarball (built via "mix hex.build").
+-my_app-*.tar
+diff --git apps/my_app/README.md b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/README.md
+deleted file mode 100644
+index 4a0521a..0000000
+--- apps/my_app/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# MyApp
+-
+-**TODO: Add description**
+diff --git apps/my_app/lib/my_app/application.ex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/lib/my_app/application.ex
+deleted file mode 100644
+index d2aa950..0000000
+--- apps/my_app/lib/my_app/application.ex
++++ /dev/null
+@@ -1,20 +0,0 @@
+-defmodule MyApp.Application do
+-  # See https://hexdocs.pm/elixir/Application.html
+-  # for more information on OTP Applications
+-  @moduledoc false
+-
+-  use Application
+-
+-  def start(_type, _args) do
+-    children = [
+-      # Start the Ecto repository
+-      MyApp.Repo,
+-      # Start the PubSub system
+-      {Phoenix.PubSub, name: MyApp.PubSub}
+-      # Start a worker by calling: MyApp.Worker.start_link(arg)
+-      # {MyApp.Worker, arg}
+-    ]
+-
+-    Supervisor.start_link(children, strategy: :one_for_one, name: MyApp.Supervisor)
+-  end
+-end
+diff --git apps/my_app/mix.exs b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/mix.exs
+deleted file mode 100644
+index 8cbc8b8..0000000
+--- apps/my_app/mix.exs
++++ /dev/null
+@@ -1,57 +0,0 @@
+-defmodule MyApp.MixProject do
+-  use Mix.Project
+-
+-  def project do
+-    [
+-      app: :my_app,
+-      version: "0.1.0",
+-      build_path: "../../_build",
+-      config_path: "../../config/config.exs",
+-      deps_path: "../../deps",
+-      lockfile: "../../mix.lock",
+-      elixir: "~> 1.7",
+-      elixirc_paths: elixirc_paths(Mix.env()),
+-      start_permanent: Mix.env() == :prod,
+-      aliases: aliases(),
+-      deps: deps()
+-    ]
+-  end
+-
+-  # Configuration for the OTP application.
+-  #
+-  # Type `mix help compile.app` for more information.
+-  def application do
+-    [
+-      mod: {MyApp.Application, []},
+-      extra_applications: [:logger, :runtime_tools]
+-    ]
+-  end
+-
+-  # Specifies which paths to compile per environment.
+-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+-  defp elixirc_paths(_), do: ["lib"]
+-
+-  # Specifies your project dependencies.
+-  #
+-  # Type `mix help deps` for examples and options.
+-  defp deps do
+-    [
+-      {:phoenix_pubsub, "~> 2.0"},
+-      {:ecto_sql, "~> 3.4"},
+-      {:postgrex, ">= 0.0.0"},
+-      {:jason, "~> 1.0"}
+-    ]
+-  end
+-
+-  # Aliases are shortcuts or tasks specific to the current project.
+-  #
+-  # See the documentation for `Mix` for more info on aliases.
+-  defp aliases do
+-    [
+-      setup: ["deps.get", "ecto.setup"],
+-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+-    ]
+-  end
+-end
+diff --git apps/my_app_web/.formatter.exs b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/.formatter.exs
+deleted file mode 100644
+index 4761678..0000000
+--- apps/my_app_web/.formatter.exs
++++ /dev/null
+@@ -1,4 +0,0 @@
+-[
+-  import_deps: [:phoenix],
+-  inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
+-]
+diff --git apps/my_app_web/.gitignore b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/.gitignore
+deleted file mode 100644
+index 5f1d967..0000000
+--- apps/my_app_web/.gitignore
++++ /dev/null
+@@ -1,34 +0,0 @@
+-# The directory Mix will write compiled artifacts to.
+-/_build/
+-
+-# If you run "mix test --cover", coverage assets end up here.
+-/cover/
+-
+-# The directory Mix downloads your dependencies sources to.
+-/deps/
+-
+-# Where 3rd-party dependencies like ExDoc output generated docs.
+-/doc/
+-
+-# Ignore .fetch files in case you like to edit your project deps locally.
+-/.fetch
+-
+-# If the VM crashes, it generates a dump, let's ignore it too.
+-erl_crash.dump
+-
+-# Also ignore archive artifacts (built via "mix archive.build").
+-*.ez
+-
+-# Ignore package tarball (built via "mix hex.build").
+-my_app_web-*.tar
+-
+-# If NPM crashes, it generates a log, let's ignore it too.
+-npm-debug.log
+-
+-# The directory NPM downloads your dependencies sources to.
+-/assets/node_modules/
+-
+-# Since we are building assets from assets/,
+-# we ignore priv/static. You may want to comment
+-# this depending on your deployment strategy.
+-/priv/static/
+diff --git apps/my_app_web/README.md b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/README.md
+deleted file mode 100644
+index c780169..0000000
+--- apps/my_app_web/README.md
++++ /dev/null
+@@ -1,20 +0,0 @@
+-# MyAppWeb
+-
+-To start your Phoenix server:
+-
+-  * Install dependencies with `mix deps.get`
+-  * Create and migrate your database with `mix ecto.setup`
+-  * Install Node.js dependencies with `npm install` inside the `assets` directory
+-  * Start Phoenix endpoint with `mix phx.server`
+-
+-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+-
+-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+-
+-## Learn more
+-
+-  * Official website: https://www.phoenixframework.org/
+-  * Guides: https://hexdocs.pm/phoenix/overview.html
+-  * Docs: https://hexdocs.pm/phoenix
+-  * Forum: https://elixirforum.com/c/phoenix-forum
+-  * Source: https://github.com/phoenixframework/phoenix
+diff --git apps/my_app_web/assets/.babelrc b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/.babelrc
+deleted file mode 100644
+index ce33b24..0000000
+--- apps/my_app_web/assets/.babelrc
++++ /dev/null
+@@ -1,5 +0,0 @@
+-{
+-    "presets": [
+-        "@babel/preset-env"
+-    ]
+-}
+diff --git apps/my_app_web/assets/css/app.scss b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/css/app.scss
+deleted file mode 100644
+index f7775db..0000000
+--- apps/my_app_web/assets/css/app.scss
++++ /dev/null
+@@ -1,91 +0,0 @@
+-/* This file is for your main application css. */
+-@import "./phoenix.css";
+-@import "../node_modules/nprogress/nprogress.css";
+-
+-/* LiveView specific classes for your customizations */
+-.phx-no-feedback.invalid-feedback,
+-.phx-no-feedback .invalid-feedback {
+-  display: none;
+-}
+-
+-.phx-click-loading {
+-  opacity: 0.5;
+-  transition: opacity 1s ease-out;
+-}
+-
+-.phx-disconnected{
+-  cursor: wait;
+-}
+-.phx-disconnected *{
+-  pointer-events: none;
+-}
+-
+-.phx-modal {
+-  opacity: 1!important;
+-  position: fixed;
+-  z-index: 1;
+-  left: 0;
+-  top: 0;
+-  width: 100%;
+-  height: 100%;
+-  overflow: auto;
+-  background-color: rgb(0,0,0);
+-  background-color: rgba(0,0,0,0.4);
+-}
+-
+-.phx-modal-content {
+-  background-color: #fefefe;
+-  margin: 15% auto;
+-  padding: 20px;
+-  border: 1px solid #888;
+-  width: 80%;
+-}
+-
+-.phx-modal-close {
+-  color: #aaa;
+-  float: right;
+-  font-size: 28px;
+-  font-weight: bold;
+-}
+-
+-.phx-modal-close:hover,
+-.phx-modal-close:focus {
+-  color: black;
+-  text-decoration: none;
+-  cursor: pointer;
+-}
+-
+-
+-/* Alerts and form errors */
+-.alert {
+-  padding: 15px;
+-  margin-bottom: 20px;
+-  border: 1px solid transparent;
+-  border-radius: 4px;
+-}
+-.alert-info {
+-  color: #31708f;
+-  background-color: #d9edf7;
+-  border-color: #bce8f1;
+-}
+-.alert-warning {
+-  color: #8a6d3b;
+-  background-color: #fcf8e3;
+-  border-color: #faebcc;
+-}
+-.alert-danger {
+-  color: #a94442;
+-  background-color: #f2dede;
+-  border-color: #ebccd1;
+-}
+-.alert p {
+-  margin-bottom: 0;
+-}
+-.alert:empty {
+-  display: none;
+-}
+-.invalid-feedback {
+-  color: #a94442;
+-  display: block;
+-  margin: -1rem 0 2rem;
+-}
+diff --git apps/my_app_web/assets/css/phoenix.css b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/css/phoenix.css
+deleted file mode 100644
+index 3767b31..0000000
+--- apps/my_app_web/assets/css/phoenix.css
++++ /dev/null
+@@ -1,101 +0,0 @@
+-/* Includes some default style for the starter application.
+- * This can be safely deleted to start fresh.
+- */
+-
+-/* Milligram v1.3.0 https://milligram.github.io
+- * Copyright (c) 2017 CJ Patoilo Licensed under the MIT license
+- */
+-
+-*,*:after,*:before{box-sizing:inherit}html{box-sizing:border-box;font-size:62.5%}body{color:#000000;font-family:'Helvetica', 'Arial', sans-serif;font-size:1.6em;font-weight:300;line-height:1.6}blockquote{border-left:0.3rem solid #d1d1d1;margin-left:0;margin-right:0;padding:1rem 1.5rem}blockquote *:last-child{margin-bottom:0}.button,button,input[type='button'],input[type='reset'],input[type='submit']{background-color:#0069d9;border:0.1rem solid #0069d9;border-radius:.4rem;color:#fff;cursor:pointer;display:inline-block;font-size:1.1rem;font-weight:700;height:3.8rem;letter-spacing:.1rem;line-height:3.8rem;padding:0 3.0rem;text-align:center;text-decoration:none;text-transform:uppercase;white-space:nowrap}.button:focus,.button:hover,button:focus,button:hover,input[type='button']:focus,input[type='button']:hover,input[type='reset']:focus,input[type='reset']:hover,input[type='submit']:focus,input[type='submit']:hover{background-color:#606c76;border-color:#606c76;color:#fff;outline:0}.button[disabled],button[disabled],input[type='button'][disabled],input[type='reset'][disabled],input[type='submit'][disabled]{cursor:default;opacity:.5}.button[disabled]:focus,.button[disabled]:hover,button[disabled]:focus,button[disabled]:hover,input[type='button'][disabled]:focus,input[type='button'][disabled]:hover,input[type='reset'][disabled]:focus,input[type='reset'][disabled]:hover,input[type='submit'][disabled]:focus,input[type='submit'][disabled]:hover{background-color:#0069d9;border-color:#0069d9}.button.button-outline,button.button-outline,input[type='button'].button-outline,input[type='reset'].button-outline,input[type='submit'].button-outline{background-color:transparent;color:#0069d9}.button.button-outline:focus,.button.button-outline:hover,button.button-outline:focus,button.button-outline:hover,input[type='button'].button-outline:focus,input[type='button'].button-outline:hover,input[type='reset'].button-outline:focus,input[type='reset'].button-outline:hover,input[type='submit'].button-outline:focus,input[type='submit'].button-outline:hover{background-color:transparent;border-color:#606c76;color:#606c76}.button.button-outline[disabled]:focus,.button.button-outline[disabled]:hover,button.button-outline[disabled]:focus,button.button-outline[disabled]:hover,input[type='button'].button-outline[disabled]:focus,input[type='button'].button-outline[disabled]:hover,input[type='reset'].button-outline[disabled]:focus,input[type='reset'].button-outline[disabled]:hover,input[type='submit'].button-outline[disabled]:focus,input[type='submit'].button-outline[disabled]:hover{border-color:inherit;color:#0069d9}.button.button-clear,button.button-clear,input[type='button'].button-clear,input[type='reset'].button-clear,input[type='submit'].button-clear{background-color:transparent;border-color:transparent;color:#0069d9}.button.button-clear:focus,.button.button-clear:hover,button.button-clear:focus,button.button-clear:hover,input[type='button'].button-clear:focus,input[type='button'].button-clear:hover,input[type='reset'].button-clear:focus,input[type='reset'].button-clear:hover,input[type='submit'].button-clear:focus,input[type='submit'].button-clear:hover{background-color:transparent;border-color:transparent;color:#606c76}.button.button-clear[disabled]:focus,.button.button-clear[disabled]:hover,button.button-clear[disabled]:focus,button.button-clear[disabled]:hover,input[type='button'].button-clear[disabled]:focus,input[type='button'].button-clear[disabled]:hover,input[type='reset'].button-clear[disabled]:focus,input[type='reset'].button-clear[disabled]:hover,input[type='submit'].button-clear[disabled]:focus,input[type='submit'].button-clear[disabled]:hover{color:#0069d9}code{background:#f4f5f6;border-radius:.4rem;font-size:86%;margin:0 .2rem;padding:.2rem .5rem;white-space:nowrap}pre{background:#f4f5f6;border-left:0.3rem solid #0069d9;overflow-y:hidden}pre>code{border-radius:0;display:block;padding:1rem 1.5rem;white-space:pre}hr{border:0;border-top:0.1rem solid #f4f5f6;margin:3.0rem 0}input[type='email'],input[type='number'],input[type='password'],input[type='search'],input[type='tel'],input[type='text'],input[type='url'],textarea,select{-webkit-appearance:none;-moz-appearance:none;appearance:none;background-color:transparent;border:0.1rem solid #d1d1d1;border-radius:.4rem;box-shadow:none;box-sizing:inherit;height:3.8rem;padding:.6rem 1.0rem;width:100%}input[type='email']:focus,input[type='number']:focus,input[type='password']:focus,input[type='search']:focus,input[type='tel']:focus,input[type='text']:focus,input[type='url']:focus,textarea:focus,select:focus{border-color:#0069d9;outline:0}select{background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="14" viewBox="0 0 29 14" width="29"><path fill="%23d1d1d1" d="M9.37727 3.625l5.08154 6.93523L19.54036 3.625"/></svg>') center right no-repeat;padding-right:3.0rem}select:focus{background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="14" viewBox="0 0 29 14" width="29"><path fill="%230069d9" d="M9.37727 3.625l5.08154 6.93523L19.54036 3.625"/></svg>')}textarea{min-height:6.5rem}label,legend{display:block;font-size:1.6rem;font-weight:700;margin-bottom:.5rem}fieldset{border-width:0;padding:0}input[type='checkbox'],input[type='radio']{display:inline}.label-inline{display:inline-block;font-weight:normal;margin-left:.5rem}.row{display:flex;flex-direction:column;padding:0;width:100%}.row.row-no-padding{padding:0}.row.row-no-padding>.column{padding:0}.row.row-wrap{flex-wrap:wrap}.row.row-top{align-items:flex-start}.row.row-bottom{align-items:flex-end}.row.row-center{align-items:center}.row.row-stretch{align-items:stretch}.row.row-baseline{align-items:baseline}.row .column{display:block;flex:1 1 auto;margin-left:0;max-width:100%;width:100%}.row .column.column-offset-10{margin-left:10%}.row .column.column-offset-20{margin-left:20%}.row .column.column-offset-25{margin-left:25%}.row .column.column-offset-33,.row .column.column-offset-34{margin-left:33.3333%}.row .column.column-offset-50{margin-left:50%}.row .column.column-offset-66,.row .column.column-offset-67{margin-left:66.6666%}.row .column.column-offset-75{margin-left:75%}.row .column.column-offset-80{margin-left:80%}.row .column.column-offset-90{margin-left:90%}.row .column.column-10{flex:0 0 10%;max-width:10%}.row .column.column-20{flex:0 0 20%;max-width:20%}.row .column.column-25{flex:0 0 25%;max-width:25%}.row .column.column-33,.row .column.column-34{flex:0 0 33.3333%;max-width:33.3333%}.row .column.column-40{flex:0 0 40%;max-width:40%}.row .column.column-50{flex:0 0 50%;max-width:50%}.row .column.column-60{flex:0 0 60%;max-width:60%}.row .column.column-66,.row .column.column-67{flex:0 0 66.6666%;max-width:66.6666%}.row .column.column-75{flex:0 0 75%;max-width:75%}.row .column.column-80{flex:0 0 80%;max-width:80%}.row .column.column-90{flex:0 0 90%;max-width:90%}.row .column .column-top{align-self:flex-start}.row .column .column-bottom{align-self:flex-end}.row .column .column-center{-ms-grid-row-align:center;align-self:center}@media (min-width: 40rem){.row{flex-direction:row;margin-left:-1.0rem;width:calc(100% + 2.0rem)}.row .column{margin-bottom:inherit;padding:0 1.0rem}}a{color:#0069d9;text-decoration:none}a:focus,a:hover{color:#606c76}dl,ol,ul{list-style:none;margin-top:0;padding-left:0}dl dl,dl ol,dl ul,ol dl,ol ol,ol ul,ul dl,ul ol,ul ul{font-size:90%;margin:1.5rem 0 1.5rem 3.0rem}ol{list-style:decimal inside}ul{list-style:circle inside}.button,button,dd,dt,li{margin-bottom:1.0rem}fieldset,input,select,textarea{margin-bottom:1.5rem}blockquote,dl,figure,form,ol,p,pre,table,ul{margin-bottom:2.5rem}table{border-spacing:0;width:100%}td,th{border-bottom:0.1rem solid #e1e1e1;padding:1.2rem 1.5rem;text-align:left}td:first-child,th:first-child{padding-left:0}td:last-child,th:last-child{padding-right:0}b,strong{font-weight:bold}p{margin-top:0}h1,h2,h3,h4,h5,h6{font-weight:300;letter-spacing:-.1rem;margin-bottom:2.0rem;margin-top:0}h1{font-size:4.6rem;line-height:1.2}h2{font-size:3.6rem;line-height:1.25}h3{font-size:2.8rem;line-height:1.3}h4{font-size:2.2rem;letter-spacing:-.08rem;line-height:1.35}h5{font-size:1.8rem;letter-spacing:-.05rem;line-height:1.5}h6{font-size:1.6rem;letter-spacing:0;line-height:1.4}img{max-width:100%}.clearfix:after{clear:both;content:' ';display:table}.float-left{float:left}.float-right{float:right}
+-
+-/* General style */
+-h1{font-size: 3.6rem; line-height: 1.25}
+-h2{font-size: 2.8rem; line-height: 1.3}
+-h3{font-size: 2.2rem; letter-spacing: -.08rem; line-height: 1.35}
+-h4{font-size: 1.8rem; letter-spacing: -.05rem; line-height: 1.5}
+-h5{font-size: 1.6rem; letter-spacing: 0; line-height: 1.4}
+-h6{font-size: 1.4rem; letter-spacing: 0; line-height: 1.2}
+-pre{padding: 1em;}
+-
+-.container{
+-  margin: 0 auto;
+-  max-width: 80.0rem;
+-  padding: 0 2.0rem;
+-  position: relative;
+-  width: 100%
+-}
+-select {
+-  width: auto;
+-}
+-
+-/* Phoenix promo and logo */
+-.phx-hero {
+-  text-align: center;
+-  border-bottom: 1px solid #e3e3e3;
+-  background: #eee;
+-  border-radius: 6px;
+-  padding: 3em 3em 1em;
+-  margin-bottom: 3rem;
+-  font-weight: 200;
+-  font-size: 120%;
+-}
+-.phx-hero input {
+-  background: #ffffff;
+-}
+-.phx-logo {
+-  min-width: 300px;
+-  margin: 1rem;
+-  display: block;
+-}
+-.phx-logo img {
+-  width: auto;
+-  display: block;
+-}
+-
+-/* Headers */
+-header {
+-  width: 100%;
+-  background: #fdfdfd;
+-  border-bottom: 1px solid #eaeaea;
+-  margin-bottom: 2rem;
+-}
+-header section {
+-  align-items: center;
+-  display: flex;
+-  flex-direction: column;
+-  justify-content: space-between;
+-}
+-header section :first-child {
+-  order: 2;
+-}
+-header section :last-child {
+-  order: 1;
+-}
+-header nav ul,
+-header nav li {
+-  margin: 0;
+-  padding: 0;
+-  display: block;
+-  text-align: right;
+-  white-space: nowrap;
+-}
+-header nav ul {
+-  margin: 1rem;
+-  margin-top: 0;
+-}
+-header nav a {
+-  display: block;
+-}
+-
+-@media (min-width: 40.0rem) { /* Small devices (landscape phones, 576px and up) */
+-  header section {
+-    flex-direction: row;
+-  }
+-  header nav ul {
+-    margin: 1rem;
+-  }
+-  .phx-logo {
+-    flex-basis: 527px;
+-    margin: 2rem 1rem;
+-  }
+-}
+diff --git apps/my_app_web/assets/js/app.js b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/js/app.js
+deleted file mode 100644
+index dfc0f97..0000000
+--- apps/my_app_web/assets/js/app.js
++++ /dev/null
+@@ -1,35 +0,0 @@
+-// We need to import the CSS so that webpack will load it.
+-// The MiniCssExtractPlugin is used to separate it out into
+-// its own CSS file.
+-import "../css/app.scss"
+-
+-// webpack automatically bundles all modules in your
+-// entry points. Those entry points can be configured
+-// in "webpack.config.js".
+-//
+-// Import deps with the dep name or local files with a relative path, for example:
+-//
+-//     import {Socket} from "phoenix"
+-//     import socket from "./socket"
+-//
+-import "phoenix_html"
+-import {Socket} from "phoenix"
+-import NProgress from "nprogress"
+-import {LiveSocket} from "phoenix_live_view"
+-
+-let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+-let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}})
+-
+-// Show progress bar on live navigation and form submits
+-window.addEventListener("phx:page-loading-start", info => NProgress.start())
+-window.addEventListener("phx:page-loading-stop", info => NProgress.done())
+-
+-// connect if there are any LiveViews on the page
+-liveSocket.connect()
+-
+-// expose liveSocket on window for web console debug logs and latency simulation:
+-// >> liveSocket.enableDebug()
+-// >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
+-// >> liveSocket.disableLatencySim()
+-window.liveSocket = liveSocket
+-
+diff --git apps/my_app_web/assets/package.json b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/package.json
+deleted file mode 100644
+index e68e844..0000000
+--- apps/my_app_web/assets/package.json
++++ /dev/null
+@@ -1,30 +0,0 @@
+-{
+-  "repository": {},
+-  "description": " ",
+-  "license": "MIT",
+-  "scripts": {
+-    "deploy": "webpack --mode production",
+-    "watch": "webpack --mode development --watch"
+-  },
+-  "dependencies": {
+-    "phoenix": "file:../../../deps/phoenix",
+-    "phoenix_html": "file:../../../deps/phoenix_html",
+-    "phoenix_live_view": "file:../../../deps/phoenix_live_view",
+-    "nprogress": "^0.2.0"
+-  },
+-  "devDependencies": {
+-    "@babel/core": "^7.0.0",
+-    "@babel/preset-env": "^7.0.0",
+-    "babel-loader": "^8.0.0",
+-    "copy-webpack-plugin": "^5.1.1",
+-    "css-loader": "^3.4.2",
+-    "sass-loader": "^8.0.2",
+-    "node-sass": "^4.13.1",
+-    "hard-source-webpack-plugin": "^0.13.1",
+-    "mini-css-extract-plugin": "^0.9.0",
+-    "optimize-css-assets-webpack-plugin": "^5.0.1",
+-    "terser-webpack-plugin": "^2.3.2",
+-    "webpack": "4.41.5",
+-    "webpack-cli": "^3.3.2"
+-  }
+-}
+diff --git apps/my_app_web/assets/static/favicon.ico b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/static/favicon.ico
+deleted file mode 100644
+index 73de524..0000000
+Binary files apps/my_app_web/assets/static/favicon.ico and /dev/null differ
+diff --git apps/my_app_web/assets/static/images/phoenix.png b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/static/images/phoenix.png
+deleted file mode 100644
+index 9c81075..0000000
+Binary files apps/my_app_web/assets/static/images/phoenix.png and /dev/null differ
+diff --git apps/my_app_web/assets/static/robots.txt b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/static/robots.txt
+deleted file mode 100644
+index 3c9c7c0..0000000
+--- apps/my_app_web/assets/static/robots.txt
++++ /dev/null
+@@ -1,5 +0,0 @@
+-# See http://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+-#
+-# To ban all spiders from the entire site uncomment the next two lines:
+-# User-agent: *
+-# Disallow: /
+diff --git apps/my_app_web/assets/webpack.config.js b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/assets/webpack.config.js
+deleted file mode 100644
+index 079610d..0000000
+--- apps/my_app_web/assets/webpack.config.js
++++ /dev/null
+@@ -1,53 +0,0 @@
+-const path = require('path');
+-const glob = require('glob');
+-const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+-const TerserPlugin = require('terser-webpack-plugin');
+-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+-const CopyWebpackPlugin = require('copy-webpack-plugin');
+-
+-module.exports = (env, options) => {
+-  const devMode = options.mode !== 'production';
+-
+-  return {
+-    optimization: {
+-      minimizer: [
+-        new TerserPlugin({ cache: true, parallel: true, sourceMap: devMode }),
+-        new OptimizeCSSAssetsPlugin({})
+-      ]
+-    },
+-    entry: {
+-      'app': glob.sync('./vendor/**/*.js').concat(['./js/app.js'])
+-    },
+-    output: {
+-      filename: '[name].js',
+-      path: path.resolve(__dirname, '../priv/static/js'),
+-      publicPath: '/js/'
+-    },
+-    devtool: devMode ? 'eval-cheap-module-source-map' : undefined,
+-    module: {
+-      rules: [
+-        {
+-          test: /\.js$/,
+-          exclude: /node_modules/,
+-          use: {
+-            loader: 'babel-loader'
+-          }
+-        },
+-        {
+-          test: /\.[s]?css$/,
+-          use: [
+-            MiniCssExtractPlugin.loader,
+-            'css-loader',
+-            'sass-loader',
+-          ],
+-        }
+-      ]
+-    },
+-    plugins: [
+-      new MiniCssExtractPlugin({ filename: '../css/app.css' }),
+-      new CopyWebpackPlugin([{ from: 'static/', to: '../' }])
+-    ]
+-    .concat(devMode ? [new HardSourceWebpackPlugin()] : [])
+-  }
+-};
+diff --git apps/my_app_web/lib/my_app_web/gettext.ex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/gettext.ex
+deleted file mode 100644
+index 9c6644d..0000000
+--- apps/my_app_web/lib/my_app_web/gettext.ex
++++ /dev/null
+@@ -1,24 +0,0 @@
+-defmodule MyAppWeb.Gettext do
+-  @moduledoc """
+-  A module providing Internationalization with a gettext-based API.
+-
+-  By using [Gettext](https://hexdocs.pm/gettext),
+-  your module gains a set of macros for translations, for example:
+-
+-      import MyAppWeb.Gettext
+-
+-      # Simple translation
+-      gettext("Here is the string to translate")
+-
+-      # Plural translation
+-      ngettext("Here is the string to translate",
+-               "Here are the strings to translate",
+-               3)
+-
+-      # Domain-based translation
+-      dgettext("errors", "Here is the error message to translate")
+-
+-  See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
+-  """
+-  use Gettext, otp_app: :my_app_web
+-end
+diff --git apps/my_app_web/lib/my_app_web/live/page_live.ex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/live/page_live.ex
+deleted file mode 100644
+index 1d75b57..0000000
+--- apps/my_app_web/lib/my_app_web/live/page_live.ex
++++ /dev/null
+@@ -1,39 +0,0 @@
+-defmodule MyAppWeb.PageLive do
+-  use MyAppWeb, :live_view
+-
+-  @impl true
+-  def mount(_params, _session, socket) do
+-    {:ok, assign(socket, query: "", results: %{})}
+-  end
+-
+-  @impl true
+-  def handle_event("suggest", %{"q" => query}, socket) do
+-    {:noreply, assign(socket, results: search(query), query: query)}
+-  end
+-
+-  @impl true
+-  def handle_event("search", %{"q" => query}, socket) do
+-    case search(query) do
+-      %{^query => vsn} ->
+-        {:noreply, redirect(socket, external: "https://hexdocs.pm/#{query}/#{vsn}")}
+-
+-      _ ->
+-        {:noreply,
+-         socket
+-         |> put_flash(:error, "No dependencies found matching \"#{query}\"")
+-         |> assign(results: %{}, query: query)}
+-    end
+-  end
+-
+-  defp search(query) do
+-    if not MyAppWeb.Endpoint.config(:code_reloader) do
+-      raise "action disabled when not in development"
+-    end
+-
+-    for {app, desc, vsn} <- Application.started_applications(),
+-        app = to_string(app),
+-        String.starts_with?(app, query) and not List.starts_with?(desc, ~c"ERTS"),
+-        into: %{},
+-        do: {app, vsn}
+-  end
+-end
+diff --git apps/my_app_web/lib/my_app_web/live/page_live.html.leex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/live/page_live.html.leex
+deleted file mode 100644
+index 52509c2..0000000
+--- apps/my_app_web/lib/my_app_web/live/page_live.html.leex
++++ /dev/null
+@@ -1,48 +0,0 @@
+-<section class="phx-hero">
+-  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
+-  <p>Peace of mind from prototype to production</p>
+-
+-  <form phx-change="suggest" phx-submit="search">
+-    <input type="text" name="q" value="<%= @query %>" placeholder="Live dependency search" list="results" autocomplete="off"/>
+-    <datalist id="results">
+-      <%= for {app, _vsn} <- @results do %>
+-        <option value="<%= app %>"><%= app %></option>
+-      <% end %>
+-    </datalist>
+-    <button type="submit" phx-disable-with="Searching...">Go to Hexdocs</button>
+-  </form>
+-</section>
+-
+-<section class="row">
+-  <article class="column">
+-    <h2>Resources</h2>
+-    <ul>
+-      <li>
+-        <a href="https://hexdocs.pm/phoenix/overview.html">Guides &amp; Docs</a>
+-      </li>
+-      <li>
+-        <a href="https://github.com/phoenixframework/phoenix">Source</a>
+-      </li>
+-      <li>
+-        <a href="https://github.com/phoenixframework/phoenix/blob/v1.5/CHANGELOG.md">v1.5 Changelog</a>
+-      </li>
+-    </ul>
+-  </article>
+-  <article class="column">
+-    <h2>Help</h2>
+-    <ul>
+-      <li>
+-        <a href="https://elixirforum.com/c/phoenix-forum">Forum</a>
+-      </li>
+-      <li>
+-        <a href="https://webchat.freenode.net/?channels=elixir-lang">#elixir-lang on Freenode IRC</a>
+-      </li>
+-      <li>
+-        <a href="https://twitter.com/elixirphoenix">Twitter @elixirphoenix</a>
+-      </li>
+-      <li>
+-        <a href="https://elixir-slackin.herokuapp.com/">Elixir on Slack</a>
+-      </li>
+-    </ul>
+-  </article>
+-</section>
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+deleted file mode 100644
+index 09ffdad..0000000
+--- apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
++++ /dev/null
+@@ -1,5 +0,0 @@
+-<main role="main" class="container">
+-  <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+-  <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+-  <%= @inner_content %>
+-</main>
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex
+deleted file mode 100644
+index 8dcded5..0000000
+--- apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex
++++ /dev/null
+@@ -1,11 +0,0 @@
+-<main role="main" class="container">
+-  <p class="alert alert-info" role="alert"
+-    phx-click="lv:clear-flash"
+-    phx-value-key="info"><%= live_flash(@flash, :info) %></p>
+-
+-  <p class="alert alert-danger" role="alert"
+-    phx-click="lv:clear-flash"
+-    phx-value-key="error"><%= live_flash(@flash, :error) %></p>
+-
+-  <%= @inner_content %>
+-</main>
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
+deleted file mode 100644
+index 630a552..0000000
+--- apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
++++ /dev/null
+@@ -1,30 +0,0 @@
+-<!DOCTYPE html>
+-<html lang="en">
+-  <head>
+-    <meta charset="utf-8"/>
+-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+-    <%= csrf_meta_tag() %>
+-    <%= live_title_tag assigns[:page_title] || "MyApp", suffix: " · Phoenix Framework" %>
+-    <link phx-track-static rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
+-    <script defer phx-track-static type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
+-  </head>
+-  <body>
+-    <header>
+-      <section class="container">
+-        <nav role="navigation">
+-          <ul>
+-            <li><a href="https://hexdocs.pm/phoenix/overview.html">Get Started</a></li>
+-            <%= if function_exported?(Routes, :live_dashboard_path, 2) do %>
+-              <li><%= link "LiveDashboard", to: Routes.live_dashboard_path(@conn, :home) %></li>
+-            <% end %>
+-          </ul>
+-        </nav>
+-        <a href="https://phoenixframework.org/" class="phx-logo">
+-          <img src="<%= Routes.static_path(@conn, "/images/phoenix.png") %>" alt="Phoenix Framework Logo"/>
+-        </a>
+-      </section>
+-    </header>
+-    <%= @inner_content %>
+-  </body>
+-</html>
+diff --git apps/my_app_web/lib/my_app_web/views/error_helpers.ex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+deleted file mode 100644
+index 9b530af..0000000
+--- apps/my_app_web/lib/my_app_web/views/error_helpers.ex
++++ /dev/null
+@@ -1,47 +0,0 @@
+-defmodule MyAppWeb.ErrorHelpers do
+-  @moduledoc """
+-  Conveniences for translating and building error messages.
+-  """
+-
+-  use Phoenix.HTML
+-
+-  @doc """
+-  Generates tag for inlined form input errors.
+-  """
+-  def error_tag(form, field) do
+-    Enum.map(Keyword.get_values(form.errors, field), fn error ->
+-      content_tag(:span, translate_error(error),
+-        class: "invalid-feedback",
+-        phx_feedback_for: input_id(form, field)
+-      )
+-    end)
+-  end
+-
+-  @doc """
+-  Translates an error message using gettext.
+-  """
+-  def translate_error({msg, opts}) do
+-    # When using gettext, we typically pass the strings we want
+-    # to translate as a static argument:
+-    #
+-    #     # Translate "is invalid" in the "errors" domain
+-    #     dgettext("errors", "is invalid")
+-    #
+-    #     # Translate the number of files with plural rules
+-    #     dngettext("errors", "1 file", "%{count} files", count)
+-    #
+-    # Because the error messages we show in our forms and APIs
+-    # are defined inside Ecto, we need to translate them dynamically.
+-    # This requires us to call the Gettext module passing our gettext
+-    # backend as first argument.
+-    #
+-    # Note we use the "errors" domain, which means translations
+-    # should be written to the errors.po file. The :count option is
+-    # set by Ecto and indicates we should also apply plural rules.
+-    if count = opts[:count] do
+-      Gettext.dngettext(MyAppWeb.Gettext, "errors", msg, msg, count, opts)
+-    else
+-      Gettext.dgettext(MyAppWeb.Gettext, "errors", msg, opts)
+-    end
+-  end
+-end
+diff --git apps/my_app_web/lib/my_app_web/views/layout_view.ex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/views/layout_view.ex
+deleted file mode 100644
+index 80fc067..0000000
+--- apps/my_app_web/lib/my_app_web/views/layout_view.ex
++++ /dev/null
+@@ -1,3 +0,0 @@
+-defmodule MyAppWeb.LayoutView do
+-  use MyAppWeb, :view
+-end
+diff --git apps/my_app_web/mix.exs b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/mix.exs
+deleted file mode 100644
+index 40d0489..0000000
+--- apps/my_app_web/mix.exs
++++ /dev/null
+@@ -1,65 +0,0 @@
+-defmodule MyAppWeb.MixProject do
+-  use Mix.Project
+-
+-  def project do
+-    [
+-      app: :my_app_web,
+-      version: "0.1.0",
+-      build_path: "../../_build",
+-      config_path: "../../config/config.exs",
+-      deps_path: "../../deps",
+-      lockfile: "../../mix.lock",
+-      elixir: "~> 1.7",
+-      elixirc_paths: elixirc_paths(Mix.env()),
+-      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
+-      start_permanent: Mix.env() == :prod,
+-      aliases: aliases(),
+-      deps: deps()
+-    ]
+-  end
+-
+-  # Configuration for the OTP application.
+-  #
+-  # Type `mix help compile.app` for more information.
+-  def application do
+-    [
+-      mod: {MyAppWeb.Application, []},
+-      extra_applications: [:logger, :runtime_tools]
+-    ]
+-  end
+-
+-  # Specifies which paths to compile per environment.
+-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+-  defp elixirc_paths(_), do: ["lib"]
+-
+-  # Specifies your project dependencies.
+-  #
+-  # Type `mix help deps` for examples and options.
+-  defp deps do
+-    [
+-      {:phoenix, "~> 1.5.7"},
+-      {:phoenix_ecto, "~> 4.0"},
+-      {:phoenix_live_view, "~> 0.15.0"},
+-      {:floki, ">= 0.27.0", only: :test},
+-      {:phoenix_html, "~> 2.11"},
+-      {:phoenix_live_reload, "~> 1.2", only: :dev},
+-      {:phoenix_live_dashboard, "~> 0.4"},
+-      {:telemetry_metrics, "~> 0.4"},
+-      {:telemetry_poller, "~> 0.4"},
+-      {:gettext, "~> 0.11"},
+-      {:my_app, in_umbrella: true},
+-      {:jason, "~> 1.0"},
+-      {:plug_cowboy, "~> 2.0"}
+-    ]
+-  end
+-
+-  # Aliases are shortcuts or tasks specific to the current project.
+-  #
+-  # See the documentation for `Mix` for more info on aliases.
+-  defp aliases do
+-    [
+-      setup: ["deps.get", "cmd npm install --prefix assets"],
+-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+-    ]
+-  end
+-end
+diff --git apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
+deleted file mode 100644
+index a589998..0000000
+--- apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
++++ /dev/null
+@@ -1,97 +0,0 @@
+-## `msgid`s in this file come from POT (.pot) files.
+-##
+-## Do not add, change, or remove `msgid`s manually here as
+-## they're tied to the ones in the corresponding POT file
+-## (with the same domain).
+-##
+-## Use `mix gettext.extract --merge` or `mix gettext.merge`
+-## to merge POT files into PO files.
+-msgid ""
+-msgstr ""
+-"Language: en\n"
+-
+-## From Ecto.Changeset.cast/4
+-msgid "can't be blank"
+-msgstr ""
+-
+-## From Ecto.Changeset.unique_constraint/3
+-msgid "has already been taken"
+-msgstr ""
+-
+-## From Ecto.Changeset.put_change/3
+-msgid "is invalid"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_acceptance/3
+-msgid "must be accepted"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_format/3
+-msgid "has invalid format"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_subset/3
+-msgid "has an invalid entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_exclusion/3
+-msgid "is reserved"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_confirmation/3
+-msgid "does not match confirmation"
+-msgstr ""
+-
+-## From Ecto.Changeset.no_assoc_constraint/3
+-msgid "is still associated with this entry"
+-msgstr ""
+-
+-msgid "are still associated with this entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_length/3
+-msgid "should be %{count} character(s)"
+-msgid_plural "should be %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have %{count} item(s)"
+-msgid_plural "should have %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at least %{count} character(s)"
+-msgid_plural "should be at least %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at least %{count} item(s)"
+-msgid_plural "should have at least %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at most %{count} character(s)"
+-msgid_plural "should be at most %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at most %{count} item(s)"
+-msgid_plural "should have at most %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-## From Ecto.Changeset.validate_number/3
+-msgid "must be less than %{number}"
+-msgstr ""
+-
+-msgid "must be greater than %{number}"
+-msgstr ""
+-
+-msgid "must be less than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be greater than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be equal to %{number}"
+-msgstr ""
+diff --git apps/my_app_web/priv/gettext/errors.pot b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/priv/gettext/errors.pot
+deleted file mode 100644
+index 39a220b..0000000
+--- apps/my_app_web/priv/gettext/errors.pot
++++ /dev/null
+@@ -1,95 +0,0 @@
+-## This is a PO Template file.
+-##
+-## `msgid`s here are often extracted from source code.
+-## Add new translations manually only if they're dynamic
+-## translations that can't be statically extracted.
+-##
+-## Run `mix gettext.extract` to bring this file up to
+-## date. Leave `msgstr`s empty as changing them here has no
+-## effect: edit them in PO (`.po`) files instead.
+-
+-## From Ecto.Changeset.cast/4
+-msgid "can't be blank"
+-msgstr ""
+-
+-## From Ecto.Changeset.unique_constraint/3
+-msgid "has already been taken"
+-msgstr ""
+-
+-## From Ecto.Changeset.put_change/3
+-msgid "is invalid"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_acceptance/3
+-msgid "must be accepted"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_format/3
+-msgid "has invalid format"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_subset/3
+-msgid "has an invalid entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_exclusion/3
+-msgid "is reserved"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_confirmation/3
+-msgid "does not match confirmation"
+-msgstr ""
+-
+-## From Ecto.Changeset.no_assoc_constraint/3
+-msgid "is still associated with this entry"
+-msgstr ""
+-
+-msgid "are still associated with this entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_length/3
+-msgid "should be %{count} character(s)"
+-msgid_plural "should be %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have %{count} item(s)"
+-msgid_plural "should have %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at least %{count} character(s)"
+-msgid_plural "should be at least %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at least %{count} item(s)"
+-msgid_plural "should have at least %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at most %{count} character(s)"
+-msgid_plural "should be at most %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at most %{count} item(s)"
+-msgid_plural "should have at most %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-## From Ecto.Changeset.validate_number/3
+-msgid "must be less than %{number}"
+-msgstr ""
+-
+-msgid "must be greater than %{number}"
+-msgstr ""
+-
+-msgid "must be less than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be greater than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be equal to %{number}"
+-msgstr ""
+diff --git apps/my_app_web/test/my_app_web/live/page_live_test.exs b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/test/my_app_web/live/page_live_test.exs
+deleted file mode 100644
+index 7d971b0..0000000
+--- apps/my_app_web/test/my_app_web/live/page_live_test.exs
++++ /dev/null
+@@ -1,11 +0,0 @@
+-defmodule MyAppWeb.PageLiveTest do
+-  use MyAppWeb.ConnCase
+-
+-  import Phoenix.LiveViewTest
+-
+-  test "disconnected and connected render", %{conn: conn} do
+-    {:ok, page_live, disconnected_html} = live(conn, "/")
+-    assert disconnected_html =~ "Welcome to Phoenix!"
+-    assert render(page_live) =~ "Welcome to Phoenix!"
+-  end
+-end
+diff --git apps/my_app_web/test/my_app_web/views/error_view_test.exs b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/test/my_app_web/views/error_view_test.exs
+deleted file mode 100644
+index 770b34b..0000000
+--- apps/my_app_web/test/my_app_web/views/error_view_test.exs
++++ /dev/null
+@@ -1,14 +0,0 @@
+-defmodule MyAppWeb.ErrorViewTest do
+-  use MyAppWeb.ConnCase, async: true
+-
+-  # Bring render/3 and render_to_string/3 for testing custom views
+-  import Phoenix.View
+-
+-  test "renders 404.html" do
+-    assert render_to_string(MyAppWeb.ErrorView, "404.html", []) == "Not Found"
+-  end
+-
+-  test "renders 500.html" do
+-    assert render_to_string(MyAppWeb.ErrorView, "500.html", []) == "Internal Server Error"
+-  end
+-end
+diff --git apps/my_app_web/test/my_app_web/views/layout_view_test.exs b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/test/my_app_web/views/layout_view_test.exs
+deleted file mode 100644
+index e1e43f4..0000000
+--- apps/my_app_web/test/my_app_web/views/layout_view_test.exs
++++ /dev/null
+@@ -1,8 +0,0 @@
+-defmodule MyAppWeb.LayoutViewTest do
+-  use MyAppWeb.ConnCase, async: true
+-
+-  # When testing helpers, you may want to import Phoenix.HTML and
+-  # use functions such as safe_to_string() to convert the helper
+-  # result into an HTML string.
+-  # import Phoenix.HTML
+-end
+diff --git apps/my_app_web/test/test_helper.exs b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/test/test_helper.exs
+deleted file mode 100644
+index 0491a89..0000000
+--- apps/my_app_web/test/test_helper.exs
++++ /dev/null
+@@ -1,2 +0,0 @@
+-ExUnit.start()
+-Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
+diff --git config/config.exs config/config.exs
+index 34378a3..4a28872 100644
+--- config/config.exs
++++ config/config.exs
+@@ -1,27 +1,21 @@
+-# This file is responsible for configuring your umbrella
+-# and **all applications** and their dependencies with the
+-# help of Mix.Config.
++# This file is responsible for configuring your application
++# and its dependencies with the aid of the Mix.Config module.
+ #
+-# Note that all applications in your umbrella share the
+-# same configuration and dependencies, which is why they
+-# all use the same configuration file. If you want different
+-# configurations or dependencies per app, it is best to
+-# move said applications out of the umbrella.
++# This configuration file is loaded before any dependency and
++# is restricted to this project.
++
++# General application configuration
+ use Mix.Config
+ 
+-# Configure Mix tasks and generators
+ config :my_app,
+-  ecto_repos: [MyApp.Repo]
+-
+-config :my_app_web,
+   ecto_repos: [MyApp.Repo],
+-  generators: [context_app: :my_app, binary_id: true]
++  generators: [binary_id: true]
+ 
+ # Configures the endpoint
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   url: [host: "localhost"],
+   secret_key_base: "[redacted]",
+-  render_errors: [view: MyAppWeb.ErrorView, accepts: ~w(html json), layout: false],
++  render_errors: [view: MyAppWeb.ErrorView, accepts: ~w(json), layout: false],
+   pubsub_server: MyApp.PubSub,
+   live_view: [signing_salt: "[redacted]"]
+ 
+diff --git config/dev.exs config/dev.exs
+index 9a31fdb..9befbc1 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -15,20 +15,12 @@ config :my_app, MyApp.Repo,
+ # The watchers configuration can be used to run external
+ # watchers to your application. For example, we use it
+ # with webpack to recompile .js and .css sources.
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   http: [port: 4000],
+   debug_errors: true,
+   code_reloader: true,
+   check_origin: false,
+-  watchers: [
+-    node: [
+-      "node_modules/webpack/bin/webpack.js",
+-      "--mode",
+-      "development",
+-      "--watch-stdin",
+-      cd: Path.expand("../apps/my_app_web/assets", __DIR__)
+-    ]
+-  ]
++  watchers: []
+ 
+ # ## SSL Support
+ #
+@@ -54,23 +46,12 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # configured to run both http and https servers on
+ # different ports.
+ 
+-# Watch static and templates for browser reloading.
+-config :my_app_web, MyAppWeb.Endpoint,
+-  live_reload: [
+-    patterns: [
+-      ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
+-      ~r"priv/gettext/.*(po)$",
+-      ~r"lib/my_app_web/(live|views)/.*(ex)$",
+-      ~r"lib/my_app_web/templates/.*(eex)$"
+-    ]
+-  ]
+-
+ # Do not include metadata nor timestamps in development logs
+ config :logger, :console, format: "[$level] $message\n"
+ 
+-# Initialize plugs at runtime for faster development compilation
+-config :phoenix, :plug_init_mode, :runtime
+-
+ # Set a higher stacktrace during development. Avoid configuring such
+ # in production as building large stacktraces may be expensive.
+ config :phoenix, :stacktrace_depth, 20
++
++# Initialize plugs at runtime for faster development compilation
++config :phoenix, :plug_init_mode, :runtime
+diff --git config/prod.exs config/prod.exs
+index 8310ab5..7443cb4 100644
+--- config/prod.exs
++++ config/prod.exs
+@@ -9,16 +9,19 @@ use Mix.Config
+ # manifest is generated by the `mix phx.digest` task,
+ # which you should run after static files are built and
+ # before starting your production server.
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   url: [host: "example.com", port: 80],
+   cache_static_manifest: "priv/static/cache_manifest.json"
+ 
++# Do not print debug messages in production
++config :logger, level: :info
++
+ # ## SSL Support
+ #
+ # To get SSL working, you will need to add the `https` key
+ # to the previous section and set your `:url` port to 443:
+ #
+-#     config :my_app_web, MyAppWeb.Endpoint,
++#     config :my_app, MyAppWeb.Endpoint,
+ #       ...
+ #       url: [host: "example.com", port: 443],
+ #       https: [
+@@ -42,14 +45,11 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # We also recommend setting `force_ssl` in your endpoint, ensuring
+ # no data is ever sent via http, always redirecting to https:
+ #
+-#     config :my_app_web, MyAppWeb.Endpoint,
++#     config :my_app, MyAppWeb.Endpoint,
+ #       force_ssl: [hsts: true]
+ #
+ # Check `Plug.SSL` for all available options in `force_ssl`.
+ 
+-# Do not print debug messages in production
+-config :logger, level: :info
+-
+ # Finally import the config/prod.secret.exs which loads secrets
+ # and configuration from environment variables.
+ import_config "prod.secret.exs"
+diff --git config/prod.secret.exs config/prod.secret.exs
+index b201076..968473e 100644
+--- config/prod.secret.exs
++++ config/prod.secret.exs
+@@ -23,7 +23,7 @@ secret_key_base =
+     You can generate one by calling: mix phx.gen.secret
+     """
+ 
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   http: [
+     port: String.to_integer(System.get_env("PORT") || "4000"),
+     transport_options: [socket_opts: [:inet6]]
+@@ -35,7 +35,7 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # If you are doing OTP releases, you need to instruct Phoenix
+ # to start each relevant endpoint:
+ #
+-#     config :my_app_web, MyAppWeb.Endpoint, server: true
++#     config :my_app, MyAppWeb.Endpoint, server: true
+ #
+ # Then you can assemble a release by calling `mix release`.
+ # See `mix help release` for more information.
+diff --git config/test.exs config/test.exs
+index a885229..5589099 100644
+--- config/test.exs
++++ config/test.exs
+@@ -14,7 +14,7 @@ config :my_app, MyApp.Repo,
+ 
+ # We don't run a server during test. If one is required,
+ # you can enable the server option below.
+-config :my_app_web, MyAppWeb.Endpoint,
++config :my_app, MyAppWeb.Endpoint,
+   http: [port: 4002],
+   server: false
+ 
+diff --git apps/my_app_web/lib/my_app_web/application.ex lib/my_app/application.ex
+similarity index 68%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/application.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app/application.ex
+index fbdce53..fd03945 100644
+--- apps/my_app_web/lib/my_app_web/application.ex
++++ lib/my_app/application.ex
+@@ -1,4 +1,4 @@
+-defmodule MyAppWeb.Application do
++defmodule MyApp.Application do
+   # See https://hexdocs.pm/elixir/Application.html
+   # for more information on OTP Applications
+   @moduledoc false
+@@ -7,17 +7,21 @@ defmodule MyAppWeb.Application do
+ 
+   def start(_type, _args) do
+     children = [
++      # Start the Ecto repository
++      MyApp.Repo,
+       # Start the Telemetry supervisor
+       MyAppWeb.Telemetry,
++      # Start the PubSub system
++      {Phoenix.PubSub, name: MyApp.PubSub},
+       # Start the Endpoint (http/https)
+       MyAppWeb.Endpoint
+-      # Start a worker by calling: MyAppWeb.Worker.start_link(arg)
+-      # {MyAppWeb.Worker, arg}
++      # Start a worker by calling: MyApp.Worker.start_link(arg)
++      # {MyApp.Worker, arg}
+     ]
+ 
+     # See https://hexdocs.pm/elixir/Supervisor.html
+     # for other strategies and supported options
+-    opts = [strategy: :one_for_one, name: MyAppWeb.Supervisor]
++    opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+     Supervisor.start_link(children, opts)
+   end
+ 
+diff --git apps/my_app/lib/my_app/repo.ex lib/my_app/repo.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/lib/my_app/repo.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app/repo.ex
+diff --git apps/my_app/lib/my_app.ex lib/my_app.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/lib/my_app.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app.ex
+diff --git apps/my_app_web/lib/my_app_web/channels/user_socket.ex lib/my_app_web/channels/user_socket.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/channels/user_socket.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app_web/channels/user_socket.ex
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex lib/my_app_web/endpoint.ex
+similarity index 82%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/endpoint.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app_web/endpoint.ex
+index cd2a818..f29dc8f 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ lib/my_app_web/endpoint.ex
+@@ -1,13 +1,13 @@
+ defmodule MyAppWeb.Endpoint do
+-  use Phoenix.Endpoint, otp_app: :my_app_web
++  use Phoenix.Endpoint, otp_app: :my_app
+ 
+   # The session will be stored in the cookie and signed,
+   # this means its contents can be read but not tampered with.
+   # Set :encryption_salt if you would also like to encrypt it.
+   @session_options [
+     store: :cookie,
+-    key: "_my_app_web_key",
+-    signing_salt: "D3KJdQNE"
++    key: "_my_app_key",
++    signing_salt: "[redacted]"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+@@ -22,17 +22,15 @@ defmodule MyAppWeb.Endpoint do
+   # when deploying your static files in production.
+   plug Plug.Static,
+     at: "/",
+-    from: :my_app_web,
++    from: :my_app,
+     gzip: false,
+     only: ~w(css fonts images js favicon.ico robots.txt)
+ 
+   # Code reloading can be explicitly enabled under the
+   # :code_reloader configuration of your endpoint.
+   if code_reloading? do
+-    socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+-    plug Phoenix.LiveReloader
+     plug Phoenix.CodeReloader
+-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app_web
++    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app
+   end
+ 
+   plug Phoenix.LiveDashboard.RequestLogger,
+diff --git apps/my_app_web/lib/my_app_web/router.ex lib/my_app_web/router.ex
+similarity index 60%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/router.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app_web/router.ex
+index ad9430e..4abdff1 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ lib/my_app_web/router.ex
+@@ -1,30 +1,14 @@
+ defmodule MyAppWeb.Router do
+   use MyAppWeb, :router
+ 
+-  pipeline :browser do
+-    plug :accepts, ["html"]
+-    plug :fetch_session
+-    plug :fetch_live_flash
+-    plug :put_root_layout, {MyAppWeb.LayoutView, :root}
+-    plug :protect_from_forgery
+-    plug :put_secure_browser_headers
+-  end
+-
+   pipeline :api do
+     plug :accepts, ["json"]
+   end
+ 
+-  scope "/", MyAppWeb do
+-    pipe_through :browser
+-
+-    live "/", PageLive, :index
++  scope "/api", MyAppWeb do
++    pipe_through :api
+   end
+ 
+-  # Other scopes may use custom stacks.
+-  # scope "/api", MyAppWeb do
+-  #   pipe_through :api
+-  # end
+-
+   # Enables LiveDashboard only for development
+   #
+   # If you want to use the LiveDashboard in production, you should put
+@@ -36,7 +20,7 @@ defmodule MyAppWeb.Router do
+     import Phoenix.LiveDashboard.Router
+ 
+     scope "/" do
+-      pipe_through :browser
++      pipe_through [:fetch_session, :protect_from_forgery]
+       live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
+     end
+   end
+diff --git apps/my_app_web/lib/my_app_web/telemetry.ex lib/my_app_web/telemetry.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/telemetry.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app_web/telemetry.ex
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app_web/views/error_helpers.ex lib/my_app_web/views/error_helpers.ex
+new file mode 100644
+index 0000000..dd1c1c4
+--- /dev/null
++++ lib/my_app_web/views/error_helpers.ex
+@@ -0,0 +1,16 @@
++defmodule MyAppWeb.ErrorHelpers do
++  @moduledoc """
++  Conveniences for translating and building error messages.
++  """
++
++  @doc """
++  Translates an error message.
++  """
++  def translate_error({msg, opts}) do
++    # Because the error messages we show in our forms and APIs
++    # are defined inside Ecto, we need to translate them dynamically.
++    Enum.reduce(opts, msg, fn {key, value}, acc ->
++      String.replace(acc, "%{#{key}}", to_string(value))
++    end)
++  end
++end
+diff --git apps/my_app_web/lib/my_app_web/views/error_view.ex lib/my_app_web/views/error_view.ex
+similarity index 56%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/views/error_view.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app_web/views/error_view.ex
+index ce4cf28..6bc5b14 100644
+--- apps/my_app_web/lib/my_app_web/views/error_view.ex
++++ lib/my_app_web/views/error_view.ex
+@@ -3,14 +3,14 @@ defmodule MyAppWeb.ErrorView do
+ 
+   # If you want to customize a particular status code
+   # for a certain format, you may uncomment below.
+-  # def render("500.html", _assigns) do
+-  #   "Internal Server Error"
++  # def render("500.json", _assigns) do
++  #   %{errors: %{detail: "Internal Server Error"}}
+   # end
+ 
+   # By default, Phoenix returns the status message from
+-  # the template name. For example, "404.html" becomes
++  # the template name. For example, "404.json" becomes
+   # "Not Found".
+   def template_not_found(template, _assigns) do
+-    Phoenix.Controller.status_message_from_template(template)
++    %{errors: %{detail: Phoenix.Controller.status_message_from_template(template)}}
+   end
+ end
+diff --git apps/my_app_web/lib/my_app_web.ex lib/my_app_web.ex
+similarity index 74%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/lib/my_app_web.ex
+index 222c4f0..1f75dac 100644
+--- apps/my_app_web/lib/my_app_web.ex
++++ lib/my_app_web.ex
+@@ -22,7 +22,6 @@ defmodule MyAppWeb do
+       use Phoenix.Controller, namespace: MyAppWeb
+ 
+       import Plug.Conn
+-      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+@@ -42,53 +41,27 @@ defmodule MyAppWeb do
+     end
+   end
+ 
+-  def live_view do
+-    quote do
+-      use Phoenix.LiveView,
+-        layout: {MyAppWeb.LayoutView, "live.html"}
+-
+-      unquote(view_helpers())
+-    end
+-  end
+-
+-  def live_component do
+-    quote do
+-      use Phoenix.LiveComponent
+-
+-      unquote(view_helpers())
+-    end
+-  end
+-
+   def router do
+     quote do
+       use Phoenix.Router
+ 
+       import Plug.Conn
+       import Phoenix.Controller
+-      import Phoenix.LiveView.Router
+     end
+   end
+ 
+   def channel do
+     quote do
+       use Phoenix.Channel
+-      import MyAppWeb.Gettext
+     end
+   end
+ 
+   defp view_helpers do
+     quote do
+-      # Use all HTML functionality (forms, tags, etc)
+-      use Phoenix.HTML
+-
+-      # Import LiveView helpers (live_render, live_component, live_patch, etc)
+-      import Phoenix.LiveView.Helpers
+-
+       # Import basic rendering functionality (render, render_layout, etc)
+       import Phoenix.View
+ 
+       import MyAppWeb.ErrorHelpers
+-      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+diff --git mix.exs mix.exs
+index 099c509..f040fd8 100644
+--- mix.exs
++++ mix.exs
+@@ -1,30 +1,48 @@
+-defmodule MyApp.Umbrella.MixProject do
++defmodule MyApp.MixProject do
+   use Mix.Project
+ 
+   def project do
+     [
+-      apps_path: "apps",
++      app: :my_app,
+       version: "0.1.0",
++      elixir: "~> 1.7",
++      elixirc_paths: elixirc_paths(Mix.env()),
++      compilers: [:phoenix] ++ Mix.compilers(),
+       start_permanent: Mix.env() == :prod,
+-      deps: deps(),
+-      aliases: aliases()
++      aliases: aliases(),
++      deps: deps()
+     ]
+   end
+ 
+-  # Dependencies can be Hex packages:
++  # Configuration for the OTP application.
+   #
+-  #   {:mydep, "~> 0.3.0"}
+-  #
+-  # Or git/path repositories:
+-  #
+-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
+-  #
+-  # Type "mix help deps" for more examples and options.
++  # Type `mix help compile.app` for more information.
++  def application do
++    [
++      mod: {MyApp.Application, []},
++      extra_applications: [:logger, :runtime_tools]
++    ]
++  end
++
++  # Specifies which paths to compile per environment.
++  defp elixirc_paths(:test), do: ["lib", "test/support"]
++  defp elixirc_paths(_), do: ["lib"]
++
++  # Specifies your project dependencies.
+   #
+-  # Dependencies listed here are available only for this project
+-  # and cannot be accessed from applications inside the apps/ folder.
++  # Type `mix help deps` for examples and options.
+   defp deps do
+-    []
++    [
++      {:phoenix, "~> 1.5.7"},
++      {:phoenix_ecto, "~> 4.1"},
++      {:ecto_sql, "~> 3.4"},
++      {:postgrex, ">= 0.0.0"},
++      {:phoenix_live_dashboard, "~> 0.4"},
++      {:telemetry_metrics, "~> 0.4"},
++      {:telemetry_poller, "~> 0.4"},
++      {:jason, "~> 1.0"},
++      {:plug_cowboy, "~> 2.0"}
++    ]
+   end
+ 
+   # Aliases are shortcuts or tasks specific to the current project.
+@@ -33,13 +51,12 @@ defmodule MyApp.Umbrella.MixProject do
+   #     $ mix setup
+   #
+   # See the documentation for `Mix` for more info on aliases.
+-  #
+-  # Aliases listed here are available only for this project
+-  # and cannot be accessed from applications inside the apps/ folder.
+   defp aliases do
+     [
+-      # run `mix setup` in all child apps
+-      setup: ["cmd mix setup"]
++      setup: ["deps.get", "ecto.setup"],
++      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
++      "ecto.reset": ["ecto.drop", "ecto.setup"],
++      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+     ]
+   end
+ end
+diff --git apps/my_app/priv/repo/migrations/.formatter.exs priv/repo/migrations/.formatter.exs
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/priv/repo/migrations/.formatter.exs
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/priv/repo/migrations/.formatter.exs
+diff --git apps/my_app/priv/repo/seeds.exs priv/repo/seeds.exs
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/priv/repo/seeds.exs
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/priv/repo/seeds.exs
+diff --git a/projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/test/my_app_web/views/error_view_test.exs test/my_app_web/views/error_view_test.exs
+new file mode 100644
+index 0000000..05a065b
+--- /dev/null
++++ test/my_app_web/views/error_view_test.exs
+@@ -0,0 +1,15 @@
++defmodule MyAppWeb.ErrorViewTest do
++  use MyAppWeb.ConnCase, async: true
++
++  # Bring render/3 and render_to_string/3 for testing custom views
++  import Phoenix.View
++
++  test "renders 404.json" do
++    assert render(MyAppWeb.ErrorView, "404.json", []) == %{errors: %{detail: "Not Found"}}
++  end
++
++  test "renders 500.json" do
++    assert render(MyAppWeb.ErrorView, "500.json", []) ==
++             %{errors: %{detail: "Internal Server Error"}}
++  end
++end
+diff --git apps/my_app_web/test/support/channel_case.ex test/support/channel_case.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/test/support/channel_case.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/test/support/channel_case.ex
+diff --git apps/my_app_web/test/support/conn_case.ex test/support/conn_case.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/test/support/conn_case.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/test/support/conn_case.ex
+diff --git apps/my_app/test/support/data_case.ex test/support/data_case.ex
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/test/support/data_case.ex
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/test/support/data_case.ex
+diff --git apps/my_app/test/test_helper.exs test/test_helper.exs
+similarity index 100%
+rename from projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app/test/test_helper.exs
+rename to projects/phoenix/1.5.7/binaryid-nogettext-nohtml-nowebpack/test/test_helper.exs

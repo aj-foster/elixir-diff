@@ -1,0 +1,359 @@
+diff --git apps/my_app_web/assets/js/app.js apps/my_app_web/assets/js/app.js
+index af00596..5f6ee98 100644
+--- apps/my_app_web/assets/js/app.js
++++ apps/my_app_web/assets/js/app.js
+@@ -12,4 +12,4 @@ import "../css/app.scss"
+ //     import {Socket} from "phoenix"
+ //     import socket from "./socket"
+ //
+-import "phoenix_html"
++
+diff --git apps/my_app_web/assets/package.json apps/my_app_web/assets/package.json
+index de0e306..624f823 100644
+--- apps/my_app_web/assets/package.json
++++ apps/my_app_web/assets/package.json
+@@ -7,8 +7,7 @@
+     "watch": "webpack --mode development --watch"
+   },
+   "dependencies": {
+-    "phoenix": "file:../../../deps/phoenix",
+-    "phoenix_html": "file:../../../deps/phoenix_html"
++    "phoenix": "file:../../../deps/phoenix"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.0.0",
+diff --git apps/my_app_web/lib/my_app_web/controllers/page_controller.ex b/projects/phoenix/1.5.7/binaryid-database-noecto-umbrella-nodash/apps/my_app_web/lib/my_app_web/controllers/page_controller.ex
+deleted file mode 100644
+index 9628848..0000000
+--- apps/my_app_web/lib/my_app_web/controllers/page_controller.ex
++++ /dev/null
+@@ -1,7 +0,0 @@
+-defmodule MyAppWeb.PageController do
+-  use MyAppWeb, :controller
+-
+-  def index(conn, _params) do
+-    render(conn, "index.html")
+-  end
+-end
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index 03b490c..51a8394 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,7 +7,7 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "E9BVFLR9"
++    signing_salt: "BIDlf8VA"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+@@ -27,8 +27,6 @@ defmodule MyAppWeb.Endpoint do
+   # Code reloading can be explicitly enabled under the
+   # :code_reloader configuration of your endpoint.
+   if code_reloading? do
+-    socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+-    plug Phoenix.LiveReloader
+     plug Phoenix.CodeReloader
+   end
+ 
+diff --git apps/my_app_web/lib/my_app_web/router.ex apps/my_app_web/lib/my_app_web/router.ex
+index 8309276..5f5f6fc 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ apps/my_app_web/lib/my_app_web/router.ex
+@@ -1,26 +1,11 @@
+ defmodule MyAppWeb.Router do
+   use MyAppWeb, :router
+ 
+-  pipeline :browser do
+-    plug :accepts, ["html"]
+-    plug :fetch_session
+-    plug :fetch_flash
+-    plug :protect_from_forgery
+-    plug :put_secure_browser_headers
+-  end
+-
+   pipeline :api do
+     plug :accepts, ["json"]
+   end
+ 
+-  scope "/", MyAppWeb do
+-    pipe_through :browser
+-
+-    get "/", PageController, :index
++  scope "/api", MyAppWeb do
++    pipe_through :api
+   end
+-
+-  # Other scopes may use custom stacks.
+-  # scope "/api", MyAppWeb do
+-  #   pipe_through :api
+-  # end
+ end
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex b/projects/phoenix/1.5.7/binaryid-database-noecto-umbrella-nodash/apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+deleted file mode 100644
+index 981504d..0000000
+--- apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
++++ /dev/null
+@@ -1,31 +0,0 @@
+-<!DOCTYPE html>
+-<html lang="en">
+-  <head>
+-    <meta charset="utf-8"/>
+-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+-    <title>MyApp · Phoenix Framework</title>
+-    <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
+-    <script defer type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
+-  </head>
+-  <body>
+-    <header>
+-      <section class="container">
+-        <nav role="navigation">
+-          <ul>
+-            <li><a href="https://hexdocs.pm/phoenix/overview.html">Get Started</a></li>
+-            
+-          </ul>
+-        </nav>
+-        <a href="https://phoenixframework.org/" class="phx-logo">
+-          <img src="<%= Routes.static_path(@conn, "/images/phoenix.png") %>" alt="Phoenix Framework Logo"/>
+-        </a>
+-      </section>
+-    </header>
+-    <main role="main" class="container">
+-      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+-      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+-      <%= @inner_content %>
+-    </main>
+-  </body>
+-</html>
+diff --git apps/my_app_web/lib/my_app_web/templates/page/index.html.eex b/projects/phoenix/1.5.7/binaryid-database-noecto-umbrella-nodash/apps/my_app_web/lib/my_app_web/templates/page/index.html.eex
+deleted file mode 100644
+index dd0a7f8..0000000
+--- apps/my_app_web/lib/my_app_web/templates/page/index.html.eex
++++ /dev/null
+@@ -1,38 +0,0 @@
+-<section class="phx-hero">
+-  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
+-  <p>Peace of mind from prototype to production</p>
+-</section>
+-
+-<section class="row">
+-  <article class="column">
+-    <h2>Resources</h2>
+-    <ul>
+-      <li>
+-        <a href="https://hexdocs.pm/phoenix/overview.html">Guides &amp; Docs</a>
+-      </li>
+-      <li>
+-        <a href="https://github.com/phoenixframework/phoenix">Source</a>
+-      </li>
+-      <li>
+-        <a href="https://github.com/phoenixframework/phoenix/blob/v1.5/CHANGELOG.md">v1.5 Changelog</a>
+-      </li>
+-    </ul>
+-  </article>
+-  <article class="column">
+-    <h2>Help</h2>
+-    <ul>
+-      <li>
+-        <a href="https://elixirforum.com/c/phoenix-forum">Forum</a>
+-      </li>
+-      <li>
+-        <a href="https://webchat.freenode.net/?channels=elixir-lang">#elixir-lang on Freenode IRC</a>
+-      </li>
+-      <li>
+-        <a href="https://twitter.com/elixirphoenix">Twitter @elixirphoenix</a>
+-      </li>
+-      <li>
+-        <a href="https://elixir-slackin.herokuapp.com/">Elixir on Slack</a>
+-      </li>
+-    </ul>
+-  </article>
+-</section>
+diff --git apps/my_app_web/lib/my_app_web/views/error_helpers.ex apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+index 9b530af..1882f7f 100644
+--- apps/my_app_web/lib/my_app_web/views/error_helpers.ex
++++ apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+@@ -3,20 +3,6 @@ defmodule MyAppWeb.ErrorHelpers do
+   Conveniences for translating and building error messages.
+   """
+ 
+-  use Phoenix.HTML
+-
+-  @doc """
+-  Generates tag for inlined form input errors.
+-  """
+-  def error_tag(form, field) do
+-    Enum.map(Keyword.get_values(form.errors, field), fn error ->
+-      content_tag(:span, translate_error(error),
+-        class: "invalid-feedback",
+-        phx_feedback_for: input_id(form, field)
+-      )
+-    end)
+-  end
+-
+   @doc """
+   Translates an error message using gettext.
+   """
+diff --git apps/my_app_web/lib/my_app_web/views/error_view.ex apps/my_app_web/lib/my_app_web/views/error_view.ex
+index ce4cf28..6bc5b14 100644
+--- apps/my_app_web/lib/my_app_web/views/error_view.ex
++++ apps/my_app_web/lib/my_app_web/views/error_view.ex
+@@ -3,14 +3,14 @@ defmodule MyAppWeb.ErrorView do
+ 
+   # If you want to customize a particular status code
+   # for a certain format, you may uncomment below.
+-  # def render("500.html", _assigns) do
+-  #   "Internal Server Error"
++  # def render("500.json", _assigns) do
++  #   %{errors: %{detail: "Internal Server Error"}}
+   # end
+ 
+   # By default, Phoenix returns the status message from
+-  # the template name. For example, "404.html" becomes
++  # the template name. For example, "404.json" becomes
+   # "Not Found".
+   def template_not_found(template, _assigns) do
+-    Phoenix.Controller.status_message_from_template(template)
++    %{errors: %{detail: Phoenix.Controller.status_message_from_template(template)}}
+   end
+ end
+diff --git apps/my_app_web/lib/my_app_web/views/layout_view.ex b/projects/phoenix/1.5.7/binaryid-database-noecto-umbrella-nodash/apps/my_app_web/lib/my_app_web/views/layout_view.ex
+deleted file mode 100644
+index 80fc067..0000000
+--- apps/my_app_web/lib/my_app_web/views/layout_view.ex
++++ /dev/null
+@@ -1,3 +0,0 @@
+-defmodule MyAppWeb.LayoutView do
+-  use MyAppWeb, :view
+-end
+diff --git apps/my_app_web/lib/my_app_web/views/page_view.ex b/projects/phoenix/1.5.7/binaryid-database-noecto-umbrella-nodash/apps/my_app_web/lib/my_app_web/views/page_view.ex
+deleted file mode 100644
+index 3385fda..0000000
+--- apps/my_app_web/lib/my_app_web/views/page_view.ex
++++ /dev/null
+@@ -1,3 +0,0 @@
+-defmodule MyAppWeb.PageView do
+-  use MyAppWeb, :view
+-end
+diff --git apps/my_app_web/lib/my_app_web.ex apps/my_app_web/lib/my_app_web.ex
+index e01f880..7af6bb3 100644
+--- apps/my_app_web/lib/my_app_web.ex
++++ apps/my_app_web/lib/my_app_web.ex
+@@ -60,9 +60,6 @@ defmodule MyAppWeb do
+ 
+   defp view_helpers do
+     quote do
+-      # Use all HTML functionality (forms, tags, etc)
+-      use Phoenix.HTML
+-
+       # Import basic rendering functionality (render, render_layout, etc)
+       import Phoenix.View
+ 
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index cf886a0..4e4a71f 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -38,8 +38,6 @@ defmodule MyAppWeb.MixProject do
+   defp deps do
+     [
+       {:phoenix, "~> 1.5.7"},
+-      {:phoenix_html, "~> 2.11"},
+-      {:phoenix_live_reload, "~> 1.2", only: :dev},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+       {:gettext, "~> 0.11"},
+diff --git apps/my_app_web/test/my_app_web/controllers/page_controller_test.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-umbrella-nodash/apps/my_app_web/test/my_app_web/controllers/page_controller_test.exs
+deleted file mode 100644
+index 5c16b7f..0000000
+--- apps/my_app_web/test/my_app_web/controllers/page_controller_test.exs
++++ /dev/null
+@@ -1,8 +0,0 @@
+-defmodule MyAppWeb.PageControllerTest do
+-  use MyAppWeb.ConnCase
+-
+-  test "GET /", %{conn: conn} do
+-    conn = get(conn, "/")
+-    assert html_response(conn, 200) =~ "Welcome to Phoenix!"
+-  end
+-end
+diff --git apps/my_app_web/test/my_app_web/views/error_view_test.exs apps/my_app_web/test/my_app_web/views/error_view_test.exs
+index 770b34b..05a065b 100644
+--- apps/my_app_web/test/my_app_web/views/error_view_test.exs
++++ apps/my_app_web/test/my_app_web/views/error_view_test.exs
+@@ -4,11 +4,12 @@ defmodule MyAppWeb.ErrorViewTest do
+   # Bring render/3 and render_to_string/3 for testing custom views
+   import Phoenix.View
+ 
+-  test "renders 404.html" do
+-    assert render_to_string(MyAppWeb.ErrorView, "404.html", []) == "Not Found"
++  test "renders 404.json" do
++    assert render(MyAppWeb.ErrorView, "404.json", []) == %{errors: %{detail: "Not Found"}}
+   end
+ 
+-  test "renders 500.html" do
+-    assert render_to_string(MyAppWeb.ErrorView, "500.html", []) == "Internal Server Error"
++  test "renders 500.json" do
++    assert render(MyAppWeb.ErrorView, "500.json", []) ==
++             %{errors: %{detail: "Internal Server Error"}}
+   end
+ end
+diff --git apps/my_app_web/test/my_app_web/views/layout_view_test.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-umbrella-nodash/apps/my_app_web/test/my_app_web/views/layout_view_test.exs
+deleted file mode 100644
+index e1e43f4..0000000
+--- apps/my_app_web/test/my_app_web/views/layout_view_test.exs
++++ /dev/null
+@@ -1,8 +0,0 @@
+-defmodule MyAppWeb.LayoutViewTest do
+-  use MyAppWeb.ConnCase, async: true
+-
+-  # When testing helpers, you may want to import Phoenix.HTML and
+-  # use functions such as safe_to_string() to convert the helper
+-  # result into an HTML string.
+-  # import Phoenix.HTML
+-end
+diff --git apps/my_app_web/test/my_app_web/views/page_view_test.exs b/projects/phoenix/1.5.7/binaryid-database-noecto-umbrella-nodash/apps/my_app_web/test/my_app_web/views/page_view_test.exs
+deleted file mode 100644
+index 82612dc..0000000
+--- apps/my_app_web/test/my_app_web/views/page_view_test.exs
++++ /dev/null
+@@ -1,3 +0,0 @@
+-defmodule MyAppWeb.PageViewTest do
+-  use MyAppWeb.ConnCase, async: true
+-end
+diff --git config/config.exs config/config.exs
+index 173ca58..b6d8a6c 100644
+--- config/config.exs
++++ config/config.exs
+@@ -18,7 +18,7 @@ config :my_app_web,
+ config :my_app_web, MyAppWeb.Endpoint,
+   url: [host: "localhost"],
+   secret_key_base: "[redacted]",
+-  render_errors: [view: MyAppWeb.ErrorView, accepts: ~w(html json), layout: false],
++  render_errors: [view: MyAppWeb.ErrorView, accepts: ~w(json), layout: false],
+   pubsub_server: MyApp.PubSub,
+   live_view: [signing_salt: "[redacted]"]
+ 
+diff --git config/dev.exs config/dev.exs
+index cc59c4f..5622e68 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -45,17 +45,6 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # configured to run both http and https servers on
+ # different ports.
+ 
+-# Watch static and templates for browser reloading.
+-config :my_app_web, MyAppWeb.Endpoint,
+-  live_reload: [
+-    patterns: [
+-      ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
+-      ~r"priv/gettext/.*(po)$",
+-      ~r"lib/my_app_web/(live|views)/.*(ex)$",
+-      ~r"lib/my_app_web/templates/.*(eex)$"
+-    ]
+-  ]
+-
+ # Do not include metadata nor timestamps in development logs
+ config :logger, :console, format: "[$level] $message\n"
+ 

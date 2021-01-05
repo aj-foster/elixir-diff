@@ -1,0 +1,184 @@
+diff --git .formatter.exs .formatter.exs
+index 90a0853..d2cda26 100644
+--- .formatter.exs
++++ .formatter.exs
+@@ -1,5 +1,4 @@
+ # Used by "mix format"
+ [
+-  inputs: ["mix.exs", "config/*.exs"],
+-  subdirectories: ["apps/*"]
++  inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"]
+ ]
+diff --git .gitignore .gitignore
+index 48bf740..2be4a13 100644
+--- .gitignore
++++ .gitignore
+@@ -19,6 +19,9 @@ erl_crash.dump
+ # Also ignore archive artifacts (built via "mix archive.build").
+ *.ez
+ 
++# Ignore package tarball (built via "mix hex.build").
++my_app-*.tar
++
+ 
+ # Temporary files for e.g. tests
+ /tmp
+diff --git README.md README.md
+index 444b469..a0b6bf0 100644
+--- README.md
++++ README.md
+@@ -2,3 +2,20 @@
+ 
+ **TODO: Add description**
+ 
++## Installation
++
++If [available in Hex](https://hex.pm/docs/publish), the package can be installed
++by adding `my_app` to your list of dependencies in `mix.exs`:
++
++```elixir
++def deps do
++  [
++    {:my_app, "~> 0.1.0"}
++  ]
++end
++```
++
++Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
++and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
++be found at [https://hexdocs.pm/my_app](https://hexdocs.pm/my_app).
++
+diff --git config/config.exs b/projects/elixir/1.11.3/sup-umbrella/config/config.exs
+deleted file mode 100644
+index ab23e80..0000000
+--- config/config.exs
++++ /dev/null
+@@ -1,18 +0,0 @@
+-# This file is responsible for configuring your umbrella
+-# and **all applications** and their dependencies with the
+-# help of the Config module.
+-#
+-# Note that all applications in your umbrella share the
+-# same configuration and dependencies, which is why they
+-# all use the same configuration file. If you want different
+-# configurations or dependencies per app, it is best to
+-# move said applications out of the umbrella.
+-import Config
+-
+-# Sample configuration:
+-#
+-#     config :logger, :console,
+-#       level: :info,
+-#       format: "$date $time [$level] $metadata$message\n",
+-#       metadata: [:user_id]
+-#
+diff --git a/projects/elixir/1.11.3/sup/lib/my_app/application.ex lib/my_app/application.ex
+new file mode 100644
+index 0000000..9de1963
+--- /dev/null
++++ lib/my_app/application.ex
+@@ -0,0 +1,20 @@
++defmodule MyApp.Application do
++  # See https://hexdocs.pm/elixir/Application.html
++  # for more information on OTP Applications
++  @moduledoc false
++
++  use Application
++
++  @impl true
++  def start(_type, _args) do
++    children = [
++      # Starts a worker by calling: MyApp.Worker.start_link(arg)
++      # {MyApp.Worker, arg}
++    ]
++
++    # See https://hexdocs.pm/elixir/Supervisor.html
++    # for other strategies and supported options
++    opts = [strategy: :one_for_one, name: MyApp.Supervisor]
++    Supervisor.start_link(children, opts)
++  end
++end
+diff --git a/projects/elixir/1.11.3/sup/lib/my_app.ex lib/my_app.ex
+new file mode 100644
+index 0000000..af46ee9
+--- /dev/null
++++ lib/my_app.ex
+@@ -0,0 +1,18 @@
++defmodule MyApp do
++  @moduledoc """
++  Documentation for `MyApp`.
++  """
++
++  @doc """
++  Hello world.
++
++  ## Examples
++
++      iex> MyApp.hello()
++      :world
++
++  """
++  def hello do
++    :world
++  end
++end
+diff --git mix.exs mix.exs
+index 304984a..2c85fdb 100644
+--- mix.exs
++++ mix.exs
+@@ -3,19 +3,27 @@ defmodule MyApp.MixProject do
+ 
+   def project do
+     [
+-      apps_path: "apps",
++      app: :my_app,
+       version: "0.1.0",
++      elixir: "~> 1.11",
+       start_permanent: Mix.env() == :prod,
+       deps: deps()
+     ]
+   end
+ 
+-  # Dependencies listed here are available only for this
+-  # project and cannot be accessed from applications inside
+-  # the apps folder.
+-  #
+-  # Run "mix help deps" for examples and options.
++  # Run "mix help compile.app" to learn about applications.
++  def application do
++    [
++      extra_applications: [:logger],
++      mod: {MyApp.Application, []}
++    ]
++  end
++
++  # Run "mix help deps" to learn about dependencies.
+   defp deps do
+-    []
++    [
++      # {:dep_from_hexpm, "~> 0.3.0"},
++      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
++    ]
+   end
+ end
+diff --git a/projects/elixir/1.11.3/sup/test/my_app_test.exs test/my_app_test.exs
+new file mode 100644
+index 0000000..b775537
+--- /dev/null
++++ test/my_app_test.exs
+@@ -0,0 +1,8 @@
++defmodule MyAppTest do
++  use ExUnit.Case
++  doctest MyApp
++
++  test "greets the world" do
++    assert MyApp.hello() == :world
++  end
++end
+diff --git a/projects/elixir/1.11.3/sup/test/test_helper.exs test/test_helper.exs
+new file mode 100644
+index 0000000..869559e
+--- /dev/null
++++ test/test_helper.exs
+@@ -0,0 +1 @@
++ExUnit.start()

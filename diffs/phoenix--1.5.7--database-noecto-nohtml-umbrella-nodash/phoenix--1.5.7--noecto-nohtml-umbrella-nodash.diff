@@ -1,0 +1,13 @@
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index 6dbc847..a9c5570 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,7 +7,7 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "C8PV4PEp"
++    signing_salt: "hJvp2nIb"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,

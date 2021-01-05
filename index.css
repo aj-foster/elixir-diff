@@ -1,0 +1,90 @@
+html, body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  background-color: rgb(40, 44, 52);
+  color: #fff;
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+}
+
+header {
+  background: linear-gradient(to right, rgb(78, 42, 142), rgb(54, 42, 140));
+  background-color: rgb(78, 42, 142);
+  border-bottom: 1px solid rgb(33, 37, 43);
+  margin-bottom: 5em;
+  padding: 5em;
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.5em;
+  margin: 0px 0px 2rem;
+}
+
+p {
+  font-size: 1.25em;
+}
+
+.compare {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.compare div {
+  flex: 1;
+  text-align: center;
+}
+
+.checks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0px 1em;
+}
+
+.checks label {
+  margin: 0px 0.5em 0.5em 0px;
+  white-space: nowrap;
+}
+
+.space {
+  font-size: 1.25em;
+  margin: 2em;
+  white-space: nowrap;
+}
+
+select {
+  font-size: 1rem;
+  font-weight: 400;
+  min-width: 8em;
+}
+
+.github {
+  display: block;
+  position: absolute;
+  right: 0px;
+  top: 0px;
+}
+
+.constrain {
+  margin: auto;
+  max-width: 80em;
+  position: relative;
+}
+
+#output-format-select {
+  position: absolute;
+  right: 1em;
+  top: 0px
+}
+
+footer {
+  margin: 2em;
+  text-align: center;
+}

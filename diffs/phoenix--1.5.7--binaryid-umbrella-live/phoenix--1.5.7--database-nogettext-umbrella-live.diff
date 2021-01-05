@@ -1,0 +1,421 @@
+diff --git apps/my_app/lib/my_app/repo.ex apps/my_app/lib/my_app/repo.ex
+index 595ff57..c623d89 100644
+--- apps/my_app/lib/my_app/repo.ex
++++ apps/my_app/lib/my_app/repo.ex
+@@ -1,5 +1,5 @@
+ defmodule MyApp.Repo do
+   use Ecto.Repo,
+     otp_app: :my_app,
+-    adapter: Ecto.Adapters.Postgres
++    adapter: Ecto.Adapters.MyXQL
+ end
+diff --git apps/my_app/mix.exs apps/my_app/mix.exs
+index 8cbc8b8..7cf924c 100644
+--- apps/my_app/mix.exs
++++ apps/my_app/mix.exs
+@@ -38,7 +38,7 @@ defmodule MyApp.MixProject do
+     [
+       {:phoenix_pubsub, "~> 2.0"},
+       {:ecto_sql, "~> 3.4"},
+-      {:postgrex, ">= 0.0.0"},
++      {:myxql, ">= 0.0.0"},
+       {:jason, "~> 1.0"}
+     ]
+   end
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index cd2a818..17cd6bc 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,7 +7,7 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "D3KJdQNE"
++    signing_salt: "n6qG82RJ"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+diff --git apps/my_app_web/lib/my_app_web/gettext.ex b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/lib/my_app_web/gettext.ex
+deleted file mode 100644
+index 9c6644d..0000000
+--- apps/my_app_web/lib/my_app_web/gettext.ex
++++ /dev/null
+@@ -1,24 +0,0 @@
+-defmodule MyAppWeb.Gettext do
+-  @moduledoc """
+-  A module providing Internationalization with a gettext-based API.
+-
+-  By using [Gettext](https://hexdocs.pm/gettext),
+-  your module gains a set of macros for translations, for example:
+-
+-      import MyAppWeb.Gettext
+-
+-      # Simple translation
+-      gettext("Here is the string to translate")
+-
+-      # Plural translation
+-      ngettext("Here is the string to translate",
+-               "Here are the strings to translate",
+-               3)
+-
+-      # Domain-based translation
+-      dgettext("errors", "Here is the error message to translate")
+-
+-  See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
+-  """
+-  use Gettext, otp_app: :my_app_web
+-end
+diff --git apps/my_app_web/lib/my_app_web/live/page_live.html.leex apps/my_app_web/lib/my_app_web/live/page_live.html.leex
+index 52509c2..f116c9c 100644
+--- apps/my_app_web/lib/my_app_web/live/page_live.html.leex
++++ apps/my_app_web/lib/my_app_web/live/page_live.html.leex
+@@ -1,5 +1,5 @@
+ <section class="phx-hero">
+-  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
++  <h1>Welcome to Phoenix!</h1>
+   <p>Peace of mind from prototype to production</p>
+ 
+   <form phx-change="suggest" phx-submit="search">
+diff --git apps/my_app_web/lib/my_app_web/views/error_helpers.ex apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+index 9b530af..a250bf2 100644
+--- apps/my_app_web/lib/my_app_web/views/error_helpers.ex
++++ apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+@@ -18,30 +18,13 @@ defmodule MyAppWeb.ErrorHelpers do
+   end
+ 
+   @doc """
+-  Translates an error message using gettext.
++  Translates an error message.
+   """
+   def translate_error({msg, opts}) do
+-    # When using gettext, we typically pass the strings we want
+-    # to translate as a static argument:
+-    #
+-    #     # Translate "is invalid" in the "errors" domain
+-    #     dgettext("errors", "is invalid")
+-    #
+-    #     # Translate the number of files with plural rules
+-    #     dngettext("errors", "1 file", "%{count} files", count)
+-    #
+     # Because the error messages we show in our forms and APIs
+     # are defined inside Ecto, we need to translate them dynamically.
+-    # This requires us to call the Gettext module passing our gettext
+-    # backend as first argument.
+-    #
+-    # Note we use the "errors" domain, which means translations
+-    # should be written to the errors.po file. The :count option is
+-    # set by Ecto and indicates we should also apply plural rules.
+-    if count = opts[:count] do
+-      Gettext.dngettext(MyAppWeb.Gettext, "errors", msg, msg, count, opts)
+-    else
+-      Gettext.dgettext(MyAppWeb.Gettext, "errors", msg, opts)
+-    end
++    Enum.reduce(opts, msg, fn {key, value}, acc ->
++      String.replace(acc, "%{#{key}}", to_string(value))
++    end)
+   end
+ end
+diff --git apps/my_app_web/lib/my_app_web.ex apps/my_app_web/lib/my_app_web.ex
+index 222c4f0..f3f5856 100644
+--- apps/my_app_web/lib/my_app_web.ex
++++ apps/my_app_web/lib/my_app_web.ex
+@@ -22,7 +22,6 @@ defmodule MyAppWeb do
+       use Phoenix.Controller, namespace: MyAppWeb
+ 
+       import Plug.Conn
+-      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+@@ -72,7 +71,6 @@ defmodule MyAppWeb do
+   def channel do
+     quote do
+       use Phoenix.Channel
+-      import MyAppWeb.Gettext
+     end
+   end
+ 
+@@ -88,7 +86,6 @@ defmodule MyAppWeb do
+       import Phoenix.View
+ 
+       import MyAppWeb.ErrorHelpers
+-      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index 40d0489..183c405 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -11,7 +11,7 @@ defmodule MyAppWeb.MixProject do
+       lockfile: "../../mix.lock",
+       elixir: "~> 1.7",
+       elixirc_paths: elixirc_paths(Mix.env()),
+-      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
++      compilers: [:phoenix] ++ Mix.compilers(),
+       start_permanent: Mix.env() == :prod,
+       aliases: aliases(),
+       deps: deps()
+@@ -46,7 +46,6 @@ defmodule MyAppWeb.MixProject do
+       {:phoenix_live_dashboard, "~> 0.4"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+-      {:gettext, "~> 0.11"},
+       {:my_app, in_umbrella: true},
+       {:jason, "~> 1.0"},
+       {:plug_cowboy, "~> 2.0"}
+diff --git apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
+deleted file mode 100644
+index a589998..0000000
+--- apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
++++ /dev/null
+@@ -1,97 +0,0 @@
+-## `msgid`s in this file come from POT (.pot) files.
+-##
+-## Do not add, change, or remove `msgid`s manually here as
+-## they're tied to the ones in the corresponding POT file
+-## (with the same domain).
+-##
+-## Use `mix gettext.extract --merge` or `mix gettext.merge`
+-## to merge POT files into PO files.
+-msgid ""
+-msgstr ""
+-"Language: en\n"
+-
+-## From Ecto.Changeset.cast/4
+-msgid "can't be blank"
+-msgstr ""
+-
+-## From Ecto.Changeset.unique_constraint/3
+-msgid "has already been taken"
+-msgstr ""
+-
+-## From Ecto.Changeset.put_change/3
+-msgid "is invalid"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_acceptance/3
+-msgid "must be accepted"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_format/3
+-msgid "has invalid format"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_subset/3
+-msgid "has an invalid entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_exclusion/3
+-msgid "is reserved"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_confirmation/3
+-msgid "does not match confirmation"
+-msgstr ""
+-
+-## From Ecto.Changeset.no_assoc_constraint/3
+-msgid "is still associated with this entry"
+-msgstr ""
+-
+-msgid "are still associated with this entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_length/3
+-msgid "should be %{count} character(s)"
+-msgid_plural "should be %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have %{count} item(s)"
+-msgid_plural "should have %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at least %{count} character(s)"
+-msgid_plural "should be at least %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at least %{count} item(s)"
+-msgid_plural "should have at least %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at most %{count} character(s)"
+-msgid_plural "should be at most %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at most %{count} item(s)"
+-msgid_plural "should have at most %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-## From Ecto.Changeset.validate_number/3
+-msgid "must be less than %{number}"
+-msgstr ""
+-
+-msgid "must be greater than %{number}"
+-msgstr ""
+-
+-msgid "must be less than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be greater than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be equal to %{number}"
+-msgstr ""
+diff --git apps/my_app_web/priv/gettext/errors.pot b/projects/phoenix/1.5.7/binaryid-umbrella-live/apps/my_app_web/priv/gettext/errors.pot
+deleted file mode 100644
+index 39a220b..0000000
+--- apps/my_app_web/priv/gettext/errors.pot
++++ /dev/null
+@@ -1,95 +0,0 @@
+-## This is a PO Template file.
+-##
+-## `msgid`s here are often extracted from source code.
+-## Add new translations manually only if they're dynamic
+-## translations that can't be statically extracted.
+-##
+-## Run `mix gettext.extract` to bring this file up to
+-## date. Leave `msgstr`s empty as changing them here has no
+-## effect: edit them in PO (`.po`) files instead.
+-
+-## From Ecto.Changeset.cast/4
+-msgid "can't be blank"
+-msgstr ""
+-
+-## From Ecto.Changeset.unique_constraint/3
+-msgid "has already been taken"
+-msgstr ""
+-
+-## From Ecto.Changeset.put_change/3
+-msgid "is invalid"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_acceptance/3
+-msgid "must be accepted"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_format/3
+-msgid "has invalid format"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_subset/3
+-msgid "has an invalid entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_exclusion/3
+-msgid "is reserved"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_confirmation/3
+-msgid "does not match confirmation"
+-msgstr ""
+-
+-## From Ecto.Changeset.no_assoc_constraint/3
+-msgid "is still associated with this entry"
+-msgstr ""
+-
+-msgid "are still associated with this entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_length/3
+-msgid "should be %{count} character(s)"
+-msgid_plural "should be %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have %{count} item(s)"
+-msgid_plural "should have %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at least %{count} character(s)"
+-msgid_plural "should be at least %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at least %{count} item(s)"
+-msgid_plural "should have at least %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at most %{count} character(s)"
+-msgid_plural "should be at most %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at most %{count} item(s)"
+-msgid_plural "should have at most %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-## From Ecto.Changeset.validate_number/3
+-msgid "must be less than %{number}"
+-msgstr ""
+-
+-msgid "must be greater than %{number}"
+-msgstr ""
+-
+-msgid "must be less than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be greater than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be equal to %{number}"
+-msgstr ""
+diff --git config/config.exs config/config.exs
+index 34378a3..0d15f7a 100644
+--- config/config.exs
++++ config/config.exs
+@@ -15,7 +15,7 @@ config :my_app,
+ 
+ config :my_app_web,
+   ecto_repos: [MyApp.Repo],
+-  generators: [context_app: :my_app, binary_id: true]
++  generators: [context_app: :my_app]
+ 
+ # Configures the endpoint
+ config :my_app_web, MyAppWeb.Endpoint,
+diff --git config/dev.exs config/dev.exs
+index 9a31fdb..1db8da7 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -2,8 +2,8 @@ use Mix.Config
+ 
+ # Configure your database
+ config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
++  username: "root",
++  password: "",
+   database: "my_app_dev",
+   hostname: "localhost",
+   show_sensitive_data_on_connection_error: true,
+@@ -59,7 +59,6 @@ config :my_app_web, MyAppWeb.Endpoint,
+   live_reload: [
+     patterns: [
+       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
+-      ~r"priv/gettext/.*(po)$",
+       ~r"lib/my_app_web/(live|views)/.*(ex)$",
+       ~r"lib/my_app_web/templates/.*(eex)$"
+     ]
+diff --git config/test.exs config/test.exs
+index a885229..d357643 100644
+--- config/test.exs
++++ config/test.exs
+@@ -6,8 +6,8 @@ use Mix.Config
+ # to provide built-in test partitioning in CI environment.
+ # Run `mix help test` for more information.
+ config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
++  username: "root",
++  password: "",
+   database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
+   hostname: "localhost",
+   pool: Ecto.Adapters.SQL.Sandbox

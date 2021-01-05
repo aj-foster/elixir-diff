@@ -1,0 +1,939 @@
+diff --git .formatter.exs .formatter.exs
+index 8a6391c..4761678 100644
+--- .formatter.exs
++++ .formatter.exs
+@@ -1,5 +1,4 @@
+ [
+-  import_deps: [:ecto, :phoenix],
+-  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
+-  subdirectories: ["priv/*/migrations"]
++  import_deps: [:phoenix],
++  inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
+ ]
+diff --git README.md README.md
+index 8e838c3..0d08a74 100644
+--- README.md
++++ README.md
+@@ -3,7 +3,6 @@
+ To start your Phoenix server:
+ 
+   * Install dependencies with `mix deps.get`
+-  * Create and migrate your database with `mix ecto.setup`
+   * Install Node.js dependencies with `npm install` inside the `assets` directory
+   * Start Phoenix endpoint with `mix phx.server`
+ 
+diff --git assets/css/app.scss assets/css/app.scss
+index f7775db..5c2c9b5 100644
+--- assets/css/app.scss
++++ assets/css/app.scss
+@@ -1,60 +1,5 @@
+ /* This file is for your main application css. */
+ @import "./phoenix.css";
+-@import "../node_modules/nprogress/nprogress.css";
+-
+-/* LiveView specific classes for your customizations */
+-.phx-no-feedback.invalid-feedback,
+-.phx-no-feedback .invalid-feedback {
+-  display: none;
+-}
+-
+-.phx-click-loading {
+-  opacity: 0.5;
+-  transition: opacity 1s ease-out;
+-}
+-
+-.phx-disconnected{
+-  cursor: wait;
+-}
+-.phx-disconnected *{
+-  pointer-events: none;
+-}
+-
+-.phx-modal {
+-  opacity: 1!important;
+-  position: fixed;
+-  z-index: 1;
+-  left: 0;
+-  top: 0;
+-  width: 100%;
+-  height: 100%;
+-  overflow: auto;
+-  background-color: rgb(0,0,0);
+-  background-color: rgba(0,0,0,0.4);
+-}
+-
+-.phx-modal-content {
+-  background-color: #fefefe;
+-  margin: 15% auto;
+-  padding: 20px;
+-  border: 1px solid #888;
+-  width: 80%;
+-}
+-
+-.phx-modal-close {
+-  color: #aaa;
+-  float: right;
+-  font-size: 28px;
+-  font-weight: bold;
+-}
+-
+-.phx-modal-close:hover,
+-.phx-modal-close:focus {
+-  color: black;
+-  text-decoration: none;
+-  cursor: pointer;
+-}
+-
+ 
+ /* Alerts and form errors */
+ .alert {
+diff --git assets/js/app.js assets/js/app.js
+index dfc0f97..af00596 100644
+--- assets/js/app.js
++++ assets/js/app.js
+@@ -13,23 +13,3 @@ import "../css/app.scss"
+ //     import socket from "./socket"
+ //
+ import "phoenix_html"
+-import {Socket} from "phoenix"
+-import NProgress from "nprogress"
+-import {LiveSocket} from "phoenix_live_view"
+-
+-let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+-let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}})
+-
+-// Show progress bar on live navigation and form submits
+-window.addEventListener("phx:page-loading-start", info => NProgress.start())
+-window.addEventListener("phx:page-loading-stop", info => NProgress.done())
+-
+-// connect if there are any LiveViews on the page
+-liveSocket.connect()
+-
+-// expose liveSocket on window for web console debug logs and latency simulation:
+-// >> liveSocket.enableDebug()
+-// >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
+-// >> liveSocket.disableLatencySim()
+-window.liveSocket = liveSocket
+-
+diff --git a/projects/phoenix/1.5.7/database-noecto-nodash/assets/js/socket.js assets/js/socket.js
+new file mode 100644
+index 0000000..09929ab
+--- /dev/null
++++ assets/js/socket.js
+@@ -0,0 +1,63 @@
++// NOTE: The contents of this file will only be executed if
++// you uncomment its entry in "assets/js/app.js".
++
++// To use Phoenix channels, the first step is to import Socket,
++// and connect at the socket path in "lib/web/endpoint.ex".
++//
++// Pass the token on params as below. Or remove it
++// from the params if you are not using authentication.
++import {Socket} from "phoenix"
++
++let socket = new Socket("/socket", {params: {token: window.userToken}})
++
++// When you connect, you'll often need to authenticate the client.
++// For example, imagine you have an authentication plug, `MyAuth`,
++// which authenticates the session and assigns a `:current_user`.
++// If the current user exists you can assign the user's token in
++// the connection for use in the layout.
++//
++// In your "lib/web/router.ex":
++//
++//     pipeline :browser do
++//       ...
++//       plug MyAuth
++//       plug :put_user_token
++//     end
++//
++//     defp put_user_token(conn, _) do
++//       if current_user = conn.assigns[:current_user] do
++//         token = Phoenix.Token.sign(conn, "user socket", current_user.id)
++//         assign(conn, :user_token, token)
++//       else
++//         conn
++//       end
++//     end
++//
++// Now you need to pass this token to JavaScript. You can do so
++// inside a script tag in "lib/web/templates/layout/app.html.eex":
++//
++//     <script>window.userToken = "<%= assigns[:user_token] %>";</script>
++//
++// You will need to verify the user token in the "connect/3" function
++// in "lib/web/channels/user_socket.ex":
++//
++//     def connect(%{"token" => token}, socket, _connect_info) do
++//       # max_age: 1209600 is equivalent to two weeks in seconds
++//       case Phoenix.Token.verify(socket, "user socket", token, max_age: 1209600) do
++//         {:ok, user_id} ->
++//           {:ok, assign(socket, :user, user_id)}
++//         {:error, reason} ->
++//           :error
++//       end
++//     end
++//
++// Finally, connect to the socket:
++socket.connect()
++
++// Now that you are connected, you can join channels with a topic:
++let channel = socket.channel("topic:subtopic", {})
++channel.join()
++  .receive("ok", resp => { console.log("Joined successfully", resp) })
++  .receive("error", resp => { console.log("Unable to join", resp) })
++
++export default socket
+diff --git assets/package.json assets/package.json
+index aa41dee..170b4d5 100644
+--- assets/package.json
++++ assets/package.json
+@@ -8,9 +8,7 @@
+   },
+   "dependencies": {
+     "phoenix": "file:../deps/phoenix",
+-    "phoenix_html": "file:../deps/phoenix_html",
+-    "phoenix_live_view": "file:../deps/phoenix_live_view",
+-    "nprogress": "^0.2.0"
++    "phoenix_html": "file:../deps/phoenix_html"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.0.0",
+diff --git config/config.exs config/config.exs
+index 1e1fcef..49df54b 100644
+--- config/config.exs
++++ config/config.exs
+@@ -7,9 +7,6 @@
+ # General application configuration
+ use Mix.Config
+ 
+-config :my_app,
+-  ecto_repos: [MyApp.Repo]
+-
+ # Configures the endpoint
+ config :my_app, MyAppWeb.Endpoint,
+   url: [host: "localhost"],
+diff --git config/dev.exs config/dev.exs
+index 153fa9a..3459b05 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -1,14 +1,5 @@
+ use Mix.Config
+ 
+-# Configure your database
+-config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
+-  database: "my_app_dev",
+-  hostname: "localhost",
+-  show_sensitive_data_on_connection_error: true,
+-  pool_size: 10
+-
+ # For development, we disable any cache and enable
+ # debugging and code reloading.
+ #
+@@ -59,6 +50,7 @@ config :my_app, MyAppWeb.Endpoint,
+   live_reload: [
+     patterns: [
+       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
++      ~r"priv/gettext/.*(po)$",
+       ~r"lib/my_app_web/(live|views)/.*(ex)$",
+       ~r"lib/my_app_web/templates/.*(eex)$"
+     ]
+diff --git config/prod.secret.exs config/prod.secret.exs
+index 968473e..3568fa4 100644
+--- config/prod.secret.exs
++++ config/prod.secret.exs
+@@ -4,18 +4,6 @@
+ # remember to add this file to your .gitignore.
+ use Mix.Config
+ 
+-database_url =
+-  System.get_env("DATABASE_URL") ||
+-    raise """
+-    environment variable DATABASE_URL is missing.
+-    For example: ecto://USER:PASS@HOST/DATABASE
+-    """
+-
+-config :my_app, MyApp.Repo,
+-  # ssl: true,
+-  url: database_url,
+-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+-
+ secret_key_base =
+   System.get_env("SECRET_KEY_BASE") ||
+     raise """
+diff --git config/test.exs config/test.exs
+index 5589099..d363390 100644
+--- config/test.exs
++++ config/test.exs
+@@ -1,17 +1,5 @@
+ use Mix.Config
+ 
+-# Configure your database
+-#
+-# The MIX_TEST_PARTITION environment variable can be used
+-# to provide built-in test partitioning in CI environment.
+-# Run `mix help test` for more information.
+-config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
+-  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
+-  hostname: "localhost",
+-  pool: Ecto.Adapters.SQL.Sandbox
+-
+ # We don't run a server during test. If one is required,
+ # you can enable the server option below.
+ config :my_app, MyAppWeb.Endpoint,
+diff --git lib/my_app/application.ex lib/my_app/application.ex
+index fd03945..9ecbdae 100644
+--- lib/my_app/application.ex
++++ lib/my_app/application.ex
+@@ -7,8 +7,6 @@ defmodule MyApp.Application do
+ 
+   def start(_type, _args) do
+     children = [
+-      # Start the Ecto repository
+-      MyApp.Repo,
+       # Start the Telemetry supervisor
+       MyAppWeb.Telemetry,
+       # Start the PubSub system
+diff --git lib/my_app/repo.ex b/projects/phoenix/1.5.7/nogettext-live-nodash/lib/my_app/repo.ex
+deleted file mode 100644
+index 595ff57..0000000
+--- lib/my_app/repo.ex
++++ /dev/null
+@@ -1,5 +0,0 @@
+-defmodule MyApp.Repo do
+-  use Ecto.Repo,
+-    otp_app: :my_app,
+-    adapter: Ecto.Adapters.Postgres
+-end
+diff --git a/projects/phoenix/1.5.7/database-noecto-nodash/lib/my_app_web/controllers/page_controller.ex lib/my_app_web/controllers/page_controller.ex
+new file mode 100644
+index 0000000..9628848
+--- /dev/null
++++ lib/my_app_web/controllers/page_controller.ex
+@@ -0,0 +1,7 @@
++defmodule MyAppWeb.PageController do
++  use MyAppWeb, :controller
++
++  def index(conn, _params) do
++    render(conn, "index.html")
++  end
++end
+diff --git lib/my_app_web/endpoint.ex lib/my_app_web/endpoint.ex
+index 505334a..dadc325 100644
+--- lib/my_app_web/endpoint.ex
++++ lib/my_app_web/endpoint.ex
+@@ -14,8 +14,6 @@ defmodule MyAppWeb.Endpoint do
+     websocket: true,
+     longpoll: false
+ 
+-  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
+-
+   # Serve at "/" the static files from "priv/static" directory.
+   #
+   # You should set gzip to true if you are running phx.digest
+@@ -32,7 +30,6 @@ defmodule MyAppWeb.Endpoint do
+     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+     plug Phoenix.LiveReloader
+     plug Phoenix.CodeReloader
+-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app
+   end
+ 
+   plug Plug.RequestId
+diff --git a/projects/phoenix/1.5.7/database-noecto-nodash/lib/my_app_web/gettext.ex lib/my_app_web/gettext.ex
+new file mode 100644
+index 0000000..7919b97
+--- /dev/null
++++ lib/my_app_web/gettext.ex
+@@ -0,0 +1,24 @@
++defmodule MyAppWeb.Gettext do
++  @moduledoc """
++  A module providing Internationalization with a gettext-based API.
++
++  By using [Gettext](https://hexdocs.pm/gettext),
++  your module gains a set of macros for translations, for example:
++
++      import MyAppWeb.Gettext
++
++      # Simple translation
++      gettext("Here is the string to translate")
++
++      # Plural translation
++      ngettext("Here is the string to translate",
++               "Here are the strings to translate",
++               3)
++
++      # Domain-based translation
++      dgettext("errors", "Here is the error message to translate")
++
++  See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
++  """
++  use Gettext, otp_app: :my_app
++end
+diff --git lib/my_app_web/live/page_live.ex b/projects/phoenix/1.5.7/nogettext-live-nodash/lib/my_app_web/live/page_live.ex
+deleted file mode 100644
+index 1d75b57..0000000
+--- lib/my_app_web/live/page_live.ex
++++ /dev/null
+@@ -1,39 +0,0 @@
+-defmodule MyAppWeb.PageLive do
+-  use MyAppWeb, :live_view
+-
+-  @impl true
+-  def mount(_params, _session, socket) do
+-    {:ok, assign(socket, query: "", results: %{})}
+-  end
+-
+-  @impl true
+-  def handle_event("suggest", %{"q" => query}, socket) do
+-    {:noreply, assign(socket, results: search(query), query: query)}
+-  end
+-
+-  @impl true
+-  def handle_event("search", %{"q" => query}, socket) do
+-    case search(query) do
+-      %{^query => vsn} ->
+-        {:noreply, redirect(socket, external: "https://hexdocs.pm/#{query}/#{vsn}")}
+-
+-      _ ->
+-        {:noreply,
+-         socket
+-         |> put_flash(:error, "No dependencies found matching \"#{query}\"")
+-         |> assign(results: %{}, query: query)}
+-    end
+-  end
+-
+-  defp search(query) do
+-    if not MyAppWeb.Endpoint.config(:code_reloader) do
+-      raise "action disabled when not in development"
+-    end
+-
+-    for {app, desc, vsn} <- Application.started_applications(),
+-        app = to_string(app),
+-        String.starts_with?(app, query) and not List.starts_with?(desc, ~c"ERTS"),
+-        into: %{},
+-        do: {app, vsn}
+-  end
+-end
+diff --git lib/my_app_web/router.ex lib/my_app_web/router.ex
+index d7a49da..8309276 100644
+--- lib/my_app_web/router.ex
++++ lib/my_app_web/router.ex
+@@ -4,8 +4,7 @@ defmodule MyAppWeb.Router do
+   pipeline :browser do
+     plug :accepts, ["html"]
+     plug :fetch_session
+-    plug :fetch_live_flash
+-    plug :put_root_layout, {MyAppWeb.LayoutView, :root}
++    plug :fetch_flash
+     plug :protect_from_forgery
+     plug :put_secure_browser_headers
+   end
+@@ -17,7 +16,7 @@ defmodule MyAppWeb.Router do
+   scope "/", MyAppWeb do
+     pipe_through :browser
+ 
+-    live "/", PageLive, :index
++    get "/", PageController, :index
+   end
+ 
+   # Other scopes may use custom stacks.
+diff --git lib/my_app_web/telemetry.ex lib/my_app_web/telemetry.ex
+index 2c9c8ae..9f50f3d 100644
+--- lib/my_app_web/telemetry.ex
++++ lib/my_app_web/telemetry.ex
+@@ -30,13 +30,6 @@ defmodule MyAppWeb.Telemetry do
+         unit: {:native, :millisecond}
+       ),
+ 
+-      # Database Metrics
+-      summary("my_app.repo.query.total_time", unit: {:native, :millisecond}),
+-      summary("my_app.repo.query.decode_time", unit: {:native, :millisecond}),
+-      summary("my_app.repo.query.query_time", unit: {:native, :millisecond}),
+-      summary("my_app.repo.query.queue_time", unit: {:native, :millisecond}),
+-      summary("my_app.repo.query.idle_time", unit: {:native, :millisecond}),
+-
+       # VM Metrics
+       summary("vm.memory.total", unit: {:byte, :kilobyte}),
+       summary("vm.total_run_queue_lengths.total"),
+diff --git lib/my_app_web/templates/layout/app.html.eex lib/my_app_web/templates/layout/app.html.eex
+index 09ffdad..981504d 100644
+--- lib/my_app_web/templates/layout/app.html.eex
++++ lib/my_app_web/templates/layout/app.html.eex
+@@ -1,5 +1,31 @@
+-<main role="main" class="container">
+-  <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+-  <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+-  <%= @inner_content %>
+-</main>
++<!DOCTYPE html>
++<html lang="en">
++  <head>
++    <meta charset="utf-8"/>
++    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
++    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
++    <title>MyApp · Phoenix Framework</title>
++    <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
++    <script defer type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
++  </head>
++  <body>
++    <header>
++      <section class="container">
++        <nav role="navigation">
++          <ul>
++            <li><a href="https://hexdocs.pm/phoenix/overview.html">Get Started</a></li>
++            
++          </ul>
++        </nav>
++        <a href="https://phoenixframework.org/" class="phx-logo">
++          <img src="<%= Routes.static_path(@conn, "/images/phoenix.png") %>" alt="Phoenix Framework Logo"/>
++        </a>
++      </section>
++    </header>
++    <main role="main" class="container">
++      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
++      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
++      <%= @inner_content %>
++    </main>
++  </body>
++</html>
+diff --git lib/my_app_web/templates/layout/live.html.leex b/projects/phoenix/1.5.7/nogettext-live-nodash/lib/my_app_web/templates/layout/live.html.leex
+deleted file mode 100644
+index 8dcded5..0000000
+--- lib/my_app_web/templates/layout/live.html.leex
++++ /dev/null
+@@ -1,11 +0,0 @@
+-<main role="main" class="container">
+-  <p class="alert alert-info" role="alert"
+-    phx-click="lv:clear-flash"
+-    phx-value-key="info"><%= live_flash(@flash, :info) %></p>
+-
+-  <p class="alert alert-danger" role="alert"
+-    phx-click="lv:clear-flash"
+-    phx-value-key="error"><%= live_flash(@flash, :error) %></p>
+-
+-  <%= @inner_content %>
+-</main>
+diff --git lib/my_app_web/templates/layout/root.html.leex b/projects/phoenix/1.5.7/nogettext-live-nodash/lib/my_app_web/templates/layout/root.html.leex
+deleted file mode 100644
+index d3b97a7..0000000
+--- lib/my_app_web/templates/layout/root.html.leex
++++ /dev/null
+@@ -1,28 +0,0 @@
+-<!DOCTYPE html>
+-<html lang="en">
+-  <head>
+-    <meta charset="utf-8"/>
+-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+-    <%= csrf_meta_tag() %>
+-    <%= live_title_tag assigns[:page_title] || "MyApp", suffix: " · Phoenix Framework" %>
+-    <link phx-track-static rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
+-    <script defer phx-track-static type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
+-  </head>
+-  <body>
+-    <header>
+-      <section class="container">
+-        <nav role="navigation">
+-          <ul>
+-            <li><a href="https://hexdocs.pm/phoenix/overview.html">Get Started</a></li>
+-            
+-          </ul>
+-        </nav>
+-        <a href="https://phoenixframework.org/" class="phx-logo">
+-          <img src="<%= Routes.static_path(@conn, "/images/phoenix.png") %>" alt="Phoenix Framework Logo"/>
+-        </a>
+-      </section>
+-    </header>
+-    <%= @inner_content %>
+-  </body>
+-</html>
+diff --git lib/my_app_web/live/page_live.html.leex lib/my_app_web/templates/page/index.html.eex
+similarity index 69%
+rename from projects/phoenix/1.5.7/nogettext-live-nodash/lib/my_app_web/live/page_live.html.leex
+rename to projects/phoenix/1.5.7/database-noecto-nodash/lib/my_app_web/templates/page/index.html.eex
+index f116c9c..dd0a7f8 100644
+--- lib/my_app_web/live/page_live.html.leex
++++ lib/my_app_web/templates/page/index.html.eex
+@@ -1,16 +1,6 @@
+ <section class="phx-hero">
+-  <h1>Welcome to Phoenix!</h1>
++  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
+   <p>Peace of mind from prototype to production</p>
+-
+-  <form phx-change="suggest" phx-submit="search">
+-    <input type="text" name="q" value="<%= @query %>" placeholder="Live dependency search" list="results" autocomplete="off"/>
+-    <datalist id="results">
+-      <%= for {app, _vsn} <- @results do %>
+-        <option value="<%= app %>"><%= app %></option>
+-      <% end %>
+-    </datalist>
+-    <button type="submit" phx-disable-with="Searching...">Go to Hexdocs</button>
+-  </form>
+ </section>
+ 
+ <section class="row">
+diff --git lib/my_app_web/views/error_helpers.ex lib/my_app_web/views/error_helpers.ex
+index a250bf2..9b530af 100644
+--- lib/my_app_web/views/error_helpers.ex
++++ lib/my_app_web/views/error_helpers.ex
+@@ -18,13 +18,30 @@ defmodule MyAppWeb.ErrorHelpers do
+   end
+ 
+   @doc """
+-  Translates an error message.
++  Translates an error message using gettext.
+   """
+   def translate_error({msg, opts}) do
++    # When using gettext, we typically pass the strings we want
++    # to translate as a static argument:
++    #
++    #     # Translate "is invalid" in the "errors" domain
++    #     dgettext("errors", "is invalid")
++    #
++    #     # Translate the number of files with plural rules
++    #     dngettext("errors", "1 file", "%{count} files", count)
++    #
+     # Because the error messages we show in our forms and APIs
+     # are defined inside Ecto, we need to translate them dynamically.
+-    Enum.reduce(opts, msg, fn {key, value}, acc ->
+-      String.replace(acc, "%{#{key}}", to_string(value))
+-    end)
++    # This requires us to call the Gettext module passing our gettext
++    # backend as first argument.
++    #
++    # Note we use the "errors" domain, which means translations
++    # should be written to the errors.po file. The :count option is
++    # set by Ecto and indicates we should also apply plural rules.
++    if count = opts[:count] do
++      Gettext.dngettext(MyAppWeb.Gettext, "errors", msg, msg, count, opts)
++    else
++      Gettext.dgettext(MyAppWeb.Gettext, "errors", msg, opts)
++    end
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/database-noecto-nodash/lib/my_app_web/views/page_view.ex lib/my_app_web/views/page_view.ex
+new file mode 100644
+index 0000000..3385fda
+--- /dev/null
++++ lib/my_app_web/views/page_view.ex
+@@ -0,0 +1,3 @@
++defmodule MyAppWeb.PageView do
++  use MyAppWeb, :view
++end
+diff --git lib/my_app_web.ex lib/my_app_web.ex
+index f3f5856..e01f880 100644
+--- lib/my_app_web.ex
++++ lib/my_app_web.ex
+@@ -22,6 +22,7 @@ defmodule MyAppWeb do
+       use Phoenix.Controller, namespace: MyAppWeb
+ 
+       import Plug.Conn
++      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+@@ -41,36 +42,19 @@ defmodule MyAppWeb do
+     end
+   end
+ 
+-  def live_view do
+-    quote do
+-      use Phoenix.LiveView,
+-        layout: {MyAppWeb.LayoutView, "live.html"}
+-
+-      unquote(view_helpers())
+-    end
+-  end
+-
+-  def live_component do
+-    quote do
+-      use Phoenix.LiveComponent
+-
+-      unquote(view_helpers())
+-    end
+-  end
+-
+   def router do
+     quote do
+       use Phoenix.Router
+ 
+       import Plug.Conn
+       import Phoenix.Controller
+-      import Phoenix.LiveView.Router
+     end
+   end
+ 
+   def channel do
+     quote do
+       use Phoenix.Channel
++      import MyAppWeb.Gettext
+     end
+   end
+ 
+@@ -79,13 +63,11 @@ defmodule MyAppWeb do
+       # Use all HTML functionality (forms, tags, etc)
+       use Phoenix.HTML
+ 
+-      # Import LiveView helpers (live_render, live_component, live_patch, etc)
+-      import Phoenix.LiveView.Helpers
+-
+       # Import basic rendering functionality (render, render_layout, etc)
+       import Phoenix.View
+ 
+       import MyAppWeb.ErrorHelpers
++      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+diff --git mix.exs mix.exs
+index 8f62969..c9f94a6 100644
+--- mix.exs
++++ mix.exs
+@@ -7,7 +7,7 @@ defmodule MyApp.MixProject do
+       version: "0.1.0",
+       elixir: "~> 1.7",
+       elixirc_paths: elixirc_paths(Mix.env()),
+-      compilers: [:phoenix] ++ Mix.compilers(),
++      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
+       start_permanent: Mix.env() == :prod,
+       aliases: aliases(),
+       deps: deps()
+@@ -34,15 +34,11 @@ defmodule MyApp.MixProject do
+   defp deps do
+     [
+       {:phoenix, "~> 1.5.7"},
+-      {:phoenix_ecto, "~> 4.1"},
+-      {:ecto_sql, "~> 3.4"},
+-      {:postgrex, ">= 0.0.0"},
+-      {:phoenix_live_view, "~> 0.15.0"},
+-      {:floki, ">= 0.27.0", only: :test},
+       {:phoenix_html, "~> 2.11"},
+       {:phoenix_live_reload, "~> 1.2", only: :dev},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
++      {:gettext, "~> 0.11"},
+       {:jason, "~> 1.0"},
+       {:plug_cowboy, "~> 2.0"}
+     ]
+@@ -56,10 +52,7 @@ defmodule MyApp.MixProject do
+   # See the documentation for `Mix` for more info on aliases.
+   defp aliases do
+     [
+-      setup: ["deps.get", "ecto.setup", "cmd npm install --prefix assets"],
+-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
++      setup: ["deps.get", "cmd npm install --prefix assets"]
+     ]
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/database-noecto-nodash/priv/gettext/en/LC_MESSAGES/errors.po priv/gettext/en/LC_MESSAGES/errors.po
+new file mode 100644
+index 0000000..cdec3a1
+--- /dev/null
++++ priv/gettext/en/LC_MESSAGES/errors.po
+@@ -0,0 +1,11 @@
++## `msgid`s in this file come from POT (.pot) files.
++##
++## Do not add, change, or remove `msgid`s manually here as
++## they're tied to the ones in the corresponding POT file
++## (with the same domain).
++##
++## Use `mix gettext.extract --merge` or `mix gettext.merge`
++## to merge POT files into PO files.
++msgid ""
++msgstr ""
++"Language: en\n"
+diff --git a/projects/phoenix/1.5.7/database-noecto-nodash/priv/gettext/errors.pot priv/gettext/errors.pot
+new file mode 100644
+index 0000000..d6f47fa
+--- /dev/null
++++ priv/gettext/errors.pot
+@@ -0,0 +1,10 @@
++## This is a PO Template file.
++##
++## `msgid`s here are often extracted from source code.
++## Add new translations manually only if they're dynamic
++## translations that can't be statically extracted.
++##
++## Run `mix gettext.extract` to bring this file up to
++## date. Leave `msgstr`s empty as changing them here has no
++## effect: edit them in PO (`.po`) files instead.
++
+diff --git priv/repo/migrations/.formatter.exs b/projects/phoenix/1.5.7/nogettext-live-nodash/priv/repo/migrations/.formatter.exs
+deleted file mode 100644
+index 49f9151..0000000
+--- priv/repo/migrations/.formatter.exs
++++ /dev/null
+@@ -1,4 +0,0 @@
+-[
+-  import_deps: [:ecto_sql],
+-  inputs: ["*.exs"]
+-]
+diff --git priv/repo/seeds.exs b/projects/phoenix/1.5.7/nogettext-live-nodash/priv/repo/seeds.exs
+deleted file mode 100644
+index e4ba004..0000000
+--- priv/repo/seeds.exs
++++ /dev/null
+@@ -1,11 +0,0 @@
+-# Script for populating the database. You can run it as:
+-#
+-#     mix run priv/repo/seeds.exs
+-#
+-# Inside the script, you can read and write to any of your
+-# repositories directly:
+-#
+-#     MyApp.Repo.insert!(%MyApp.SomeSchema{})
+-#
+-# We recommend using the bang functions (`insert!`, `update!`
+-# and so on) as they will fail if something goes wrong.
+diff --git a/projects/phoenix/1.5.7/database-noecto-nodash/test/my_app_web/controllers/page_controller_test.exs test/my_app_web/controllers/page_controller_test.exs
+new file mode 100644
+index 0000000..5c16b7f
+--- /dev/null
++++ test/my_app_web/controllers/page_controller_test.exs
+@@ -0,0 +1,8 @@
++defmodule MyAppWeb.PageControllerTest do
++  use MyAppWeb.ConnCase
++
++  test "GET /", %{conn: conn} do
++    conn = get(conn, "/")
++    assert html_response(conn, 200) =~ "Welcome to Phoenix!"
++  end
++end
+diff --git test/my_app_web/live/page_live_test.exs b/projects/phoenix/1.5.7/nogettext-live-nodash/test/my_app_web/live/page_live_test.exs
+deleted file mode 100644
+index 7d971b0..0000000
+--- test/my_app_web/live/page_live_test.exs
++++ /dev/null
+@@ -1,11 +0,0 @@
+-defmodule MyAppWeb.PageLiveTest do
+-  use MyAppWeb.ConnCase
+-
+-  import Phoenix.LiveViewTest
+-
+-  test "disconnected and connected render", %{conn: conn} do
+-    {:ok, page_live, disconnected_html} = live(conn, "/")
+-    assert disconnected_html =~ "Welcome to Phoenix!"
+-    assert render(page_live) =~ "Welcome to Phoenix!"
+-  end
+-end
+diff --git a/projects/phoenix/1.5.7/database-noecto-nodash/test/my_app_web/views/page_view_test.exs test/my_app_web/views/page_view_test.exs
+new file mode 100644
+index 0000000..82612dc
+--- /dev/null
++++ test/my_app_web/views/page_view_test.exs
+@@ -0,0 +1,3 @@
++defmodule MyAppWeb.PageViewTest do
++  use MyAppWeb.ConnCase, async: true
++end
+diff --git test/support/channel_case.ex test/support/channel_case.ex
+index 831b300..2a1dfdb 100644
+--- test/support/channel_case.ex
++++ test/support/channel_case.ex
+@@ -28,13 +28,7 @@ defmodule MyAppWeb.ChannelCase do
+     end
+   end
+ 
+-  setup tags do
+-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
+-
+-    unless tags[:async] do
+-      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
+-    end
+-
++  setup _tags do
+     :ok
+   end
+ end
+diff --git test/support/conn_case.ex test/support/conn_case.ex
+index a1d99dc..ae658eb 100644
+--- test/support/conn_case.ex
++++ test/support/conn_case.ex
+@@ -31,13 +31,7 @@ defmodule MyAppWeb.ConnCase do
+     end
+   end
+ 
+-  setup tags do
+-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
+-
+-    unless tags[:async] do
+-      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
+-    end
+-
++  setup _tags do
+     {:ok, conn: Phoenix.ConnTest.build_conn()}
+   end
+ end
+diff --git test/support/data_case.ex b/projects/phoenix/1.5.7/nogettext-live-nodash/test/support/data_case.ex
+deleted file mode 100644
+index 774d271..0000000
+--- test/support/data_case.ex
++++ /dev/null
+@@ -1,55 +0,0 @@
+-defmodule MyApp.DataCase do
+-  @moduledoc """
+-  This module defines the setup for tests requiring
+-  access to the application's data layer.
+-
+-  You may define functions here to be used as helpers in
+-  your tests.
+-
+-  Finally, if the test case interacts with the database,
+-  we enable the SQL sandbox, so changes done to the database
+-  are reverted at the end of every test. If you are using
+-  PostgreSQL, you can even run database tests asynchronously
+-  by setting `use MyApp.DataCase, async: true`, although
+-  this option is not recommended for other databases.
+-  """
+-
+-  use ExUnit.CaseTemplate
+-
+-  using do
+-    quote do
+-      alias MyApp.Repo
+-
+-      import Ecto
+-      import Ecto.Changeset
+-      import Ecto.Query
+-      import MyApp.DataCase
+-    end
+-  end
+-
+-  setup tags do
+-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
+-
+-    unless tags[:async] do
+-      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
+-    end
+-
+-    :ok
+-  end
+-
+-  @doc """
+-  A helper that transforms changeset errors into a map of messages.
+-
+-      assert {:error, changeset} = Accounts.create_user(%{password: "short"})
+-      assert "password is too short" in errors_on(changeset).password
+-      assert %{password: ["password is too short"]} = errors_on(changeset)
+-
+-  """
+-  def errors_on(changeset) do
+-    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
+-      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
+-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+-      end)
+-    end)
+-  end
+-end
+diff --git test/test_helper.exs test/test_helper.exs
+index 0491a89..869559e 100644
+--- test/test_helper.exs
++++ test/test_helper.exs
+@@ -1,2 +1 @@
+ ExUnit.start()
+-Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)

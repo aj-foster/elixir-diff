@@ -1,0 +1,14 @@
+diff --git config/config.exs config/config.exs
+index 3a38fed..b600774 100644
+--- config/config.exs
++++ config/config.exs
+@@ -7,6 +7,9 @@
+ # General application configuration
+ use Mix.Config
+ 
++config :my_app,
++  generators: [binary_id: true]
++
+ # Configures the endpoint
+ config :my_app, MyAppWeb.Endpoint,
+   url: [host: "localhost"],

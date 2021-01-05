@@ -1,0 +1,75 @@
+diff --git config/config.exs config/config.exs
+index 819aaf2..4a28872 100644
+--- config/config.exs
++++ config/config.exs
+@@ -8,7 +8,8 @@
+ use Mix.Config
+ 
+ config :my_app,
+-  ecto_repos: [MyApp.Repo]
++  ecto_repos: [MyApp.Repo],
++  generators: [binary_id: true]
+ 
+ # Configures the endpoint
+ config :my_app, MyAppWeb.Endpoint,
+diff --git lib/my_app_web/endpoint.ex lib/my_app_web/endpoint.ex
+index 8e2fda4..f29dc8f 100644
+--- lib/my_app_web/endpoint.ex
++++ lib/my_app_web/endpoint.ex
+@@ -14,6 +14,8 @@ defmodule MyAppWeb.Endpoint do
+     websocket: true,
+     longpoll: false
+ 
++  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
++
+   # Serve at "/" the static files from "priv/static" directory.
+   #
+   # You should set gzip to true if you are running phx.digest
+@@ -31,6 +33,10 @@ defmodule MyAppWeb.Endpoint do
+     plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app
+   end
+ 
++  plug Phoenix.LiveDashboard.RequestLogger,
++    param_key: "request_logger",
++    cookie_key: "request_logger"
++
+   plug Plug.RequestId
+   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+ 
+diff --git lib/my_app_web/router.ex lib/my_app_web/router.ex
+index 5f5f6fc..4abdff1 100644
+--- lib/my_app_web/router.ex
++++ lib/my_app_web/router.ex
+@@ -8,4 +8,20 @@ defmodule MyAppWeb.Router do
+   scope "/api", MyAppWeb do
+     pipe_through :api
+   end
++
++  # Enables LiveDashboard only for development
++  #
++  # If you want to use the LiveDashboard in production, you should put
++  # it behind authentication and allow only admins to access it.
++  # If your application does not have an admins-only section yet,
++  # you can use Plug.BasicAuth to set up some basic authentication
++  # as long as you are also using SSL (which you should anyway).
++  if Mix.env() in [:dev, :test] do
++    import Phoenix.LiveDashboard.Router
++
++    scope "/" do
++      pipe_through [:fetch_session, :protect_from_forgery]
++      live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
++    end
++  end
+ end
+diff --git mix.exs mix.exs
+index 6230c2d..f2ad798 100644
+--- mix.exs
++++ mix.exs
+@@ -37,6 +37,7 @@ defmodule MyApp.MixProject do
+       {:phoenix_ecto, "~> 4.1"},
+       {:ecto_sql, "~> 3.4"},
+       {:myxql, ">= 0.0.0"},
++      {:phoenix_live_dashboard, "~> 0.4"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+       {:jason, "~> 1.0"},

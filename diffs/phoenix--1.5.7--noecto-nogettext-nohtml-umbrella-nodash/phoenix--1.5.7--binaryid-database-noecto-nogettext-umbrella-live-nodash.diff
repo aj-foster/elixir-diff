@@ -1,0 +1,617 @@
+diff --git apps/my_app_web/assets/css/app.scss apps/my_app_web/assets/css/app.scss
+index 5c2c9b5..f7775db 100644
+--- apps/my_app_web/assets/css/app.scss
++++ apps/my_app_web/assets/css/app.scss
+@@ -1,5 +1,60 @@
+ /* This file is for your main application css. */
+ @import "./phoenix.css";
++@import "../node_modules/nprogress/nprogress.css";
++
++/* LiveView specific classes for your customizations */
++.phx-no-feedback.invalid-feedback,
++.phx-no-feedback .invalid-feedback {
++  display: none;
++}
++
++.phx-click-loading {
++  opacity: 0.5;
++  transition: opacity 1s ease-out;
++}
++
++.phx-disconnected{
++  cursor: wait;
++}
++.phx-disconnected *{
++  pointer-events: none;
++}
++
++.phx-modal {
++  opacity: 1!important;
++  position: fixed;
++  z-index: 1;
++  left: 0;
++  top: 0;
++  width: 100%;
++  height: 100%;
++  overflow: auto;
++  background-color: rgb(0,0,0);
++  background-color: rgba(0,0,0,0.4);
++}
++
++.phx-modal-content {
++  background-color: #fefefe;
++  margin: 15% auto;
++  padding: 20px;
++  border: 1px solid #888;
++  width: 80%;
++}
++
++.phx-modal-close {
++  color: #aaa;
++  float: right;
++  font-size: 28px;
++  font-weight: bold;
++}
++
++.phx-modal-close:hover,
++.phx-modal-close:focus {
++  color: black;
++  text-decoration: none;
++  cursor: pointer;
++}
++
+ 
+ /* Alerts and form errors */
+ .alert {
+diff --git apps/my_app_web/assets/js/app.js apps/my_app_web/assets/js/app.js
+index 5f6ee98..dfc0f97 100644
+--- apps/my_app_web/assets/js/app.js
++++ apps/my_app_web/assets/js/app.js
+@@ -12,4 +12,24 @@ import "../css/app.scss"
+ //     import {Socket} from "phoenix"
+ //     import socket from "./socket"
+ //
++import "phoenix_html"
++import {Socket} from "phoenix"
++import NProgress from "nprogress"
++import {LiveSocket} from "phoenix_live_view"
++
++let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
++let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}})
++
++// Show progress bar on live navigation and form submits
++window.addEventListener("phx:page-loading-start", info => NProgress.start())
++window.addEventListener("phx:page-loading-stop", info => NProgress.done())
++
++// connect if there are any LiveViews on the page
++liveSocket.connect()
++
++// expose liveSocket on window for web console debug logs and latency simulation:
++// >> liveSocket.enableDebug()
++// >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
++// >> liveSocket.disableLatencySim()
++window.liveSocket = liveSocket
+ 
+diff --git apps/my_app_web/assets/js/socket.js b/projects/phoenix/1.5.7/noecto-nogettext-nohtml-umbrella-nodash/apps/my_app_web/assets/js/socket.js
+deleted file mode 100644
+index 09929ab..0000000
+--- apps/my_app_web/assets/js/socket.js
++++ /dev/null
+@@ -1,63 +0,0 @@
+-// NOTE: The contents of this file will only be executed if
+-// you uncomment its entry in "assets/js/app.js".
+-
+-// To use Phoenix channels, the first step is to import Socket,
+-// and connect at the socket path in "lib/web/endpoint.ex".
+-//
+-// Pass the token on params as below. Or remove it
+-// from the params if you are not using authentication.
+-import {Socket} from "phoenix"
+-
+-let socket = new Socket("/socket", {params: {token: window.userToken}})
+-
+-// When you connect, you'll often need to authenticate the client.
+-// For example, imagine you have an authentication plug, `MyAuth`,
+-// which authenticates the session and assigns a `:current_user`.
+-// If the current user exists you can assign the user's token in
+-// the connection for use in the layout.
+-//
+-// In your "lib/web/router.ex":
+-//
+-//     pipeline :browser do
+-//       ...
+-//       plug MyAuth
+-//       plug :put_user_token
+-//     end
+-//
+-//     defp put_user_token(conn, _) do
+-//       if current_user = conn.assigns[:current_user] do
+-//         token = Phoenix.Token.sign(conn, "user socket", current_user.id)
+-//         assign(conn, :user_token, token)
+-//       else
+-//         conn
+-//       end
+-//     end
+-//
+-// Now you need to pass this token to JavaScript. You can do so
+-// inside a script tag in "lib/web/templates/layout/app.html.eex":
+-//
+-//     <script>window.userToken = "<%= assigns[:user_token] %>";</script>
+-//
+-// You will need to verify the user token in the "connect/3" function
+-// in "lib/web/channels/user_socket.ex":
+-//
+-//     def connect(%{"token" => token}, socket, _connect_info) do
+-//       # max_age: 1209600 is equivalent to two weeks in seconds
+-//       case Phoenix.Token.verify(socket, "user socket", token, max_age: 1209600) do
+-//         {:ok, user_id} ->
+-//           {:ok, assign(socket, :user, user_id)}
+-//         {:error, reason} ->
+-//           :error
+-//       end
+-//     end
+-//
+-// Finally, connect to the socket:
+-socket.connect()
+-
+-// Now that you are connected, you can join channels with a topic:
+-let channel = socket.channel("topic:subtopic", {})
+-channel.join()
+-  .receive("ok", resp => { console.log("Joined successfully", resp) })
+-  .receive("error", resp => { console.log("Unable to join", resp) })
+-
+-export default socket
+diff --git apps/my_app_web/assets/package.json apps/my_app_web/assets/package.json
+index 624f823..e68e844 100644
+--- apps/my_app_web/assets/package.json
++++ apps/my_app_web/assets/package.json
+@@ -7,7 +7,10 @@
+     "watch": "webpack --mode development --watch"
+   },
+   "dependencies": {
+-    "phoenix": "file:../../../deps/phoenix"
++    "phoenix": "file:../../../deps/phoenix",
++    "phoenix_html": "file:../../../deps/phoenix_html",
++    "phoenix_live_view": "file:../../../deps/phoenix_live_view",
++    "nprogress": "^0.2.0"
+   },
+   "devDependencies": {
+     "@babel/core": "^7.0.0",
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index c68bac1..66935db 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,13 +7,15 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "7X9XgVea"
++    signing_salt: "Knlk5tki"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+     websocket: true,
+     longpoll: false
+ 
++  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
++
+   # Serve at "/" the static files from "priv/static" directory.
+   #
+   # You should set gzip to true if you are running phx.digest
+@@ -27,6 +29,8 @@ defmodule MyAppWeb.Endpoint do
+   # Code reloading can be explicitly enabled under the
+   # :code_reloader configuration of your endpoint.
+   if code_reloading? do
++    socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
++    plug Phoenix.LiveReloader
+     plug Phoenix.CodeReloader
+   end
+ 
+diff --git a/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/live/page_live.ex apps/my_app_web/lib/my_app_web/live/page_live.ex
+new file mode 100644
+index 0000000..1d75b57
+--- /dev/null
++++ apps/my_app_web/lib/my_app_web/live/page_live.ex
+@@ -0,0 +1,39 @@
++defmodule MyAppWeb.PageLive do
++  use MyAppWeb, :live_view
++
++  @impl true
++  def mount(_params, _session, socket) do
++    {:ok, assign(socket, query: "", results: %{})}
++  end
++
++  @impl true
++  def handle_event("suggest", %{"q" => query}, socket) do
++    {:noreply, assign(socket, results: search(query), query: query)}
++  end
++
++  @impl true
++  def handle_event("search", %{"q" => query}, socket) do
++    case search(query) do
++      %{^query => vsn} ->
++        {:noreply, redirect(socket, external: "https://hexdocs.pm/#{query}/#{vsn}")}
++
++      _ ->
++        {:noreply,
++         socket
++         |> put_flash(:error, "No dependencies found matching \"#{query}\"")
++         |> assign(results: %{}, query: query)}
++    end
++  end
++
++  defp search(query) do
++    if not MyAppWeb.Endpoint.config(:code_reloader) do
++      raise "action disabled when not in development"
++    end
++
++    for {app, desc, vsn} <- Application.started_applications(),
++        app = to_string(app),
++        String.starts_with?(app, query) and not List.starts_with?(desc, ~c"ERTS"),
++        into: %{},
++        do: {app, vsn}
++  end
++end
+diff --git a/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/live/page_live.html.leex apps/my_app_web/lib/my_app_web/live/page_live.html.leex
+new file mode 100644
+index 0000000..f116c9c
+--- /dev/null
++++ apps/my_app_web/lib/my_app_web/live/page_live.html.leex
+@@ -0,0 +1,48 @@
++<section class="phx-hero">
++  <h1>Welcome to Phoenix!</h1>
++  <p>Peace of mind from prototype to production</p>
++
++  <form phx-change="suggest" phx-submit="search">
++    <input type="text" name="q" value="<%= @query %>" placeholder="Live dependency search" list="results" autocomplete="off"/>
++    <datalist id="results">
++      <%= for {app, _vsn} <- @results do %>
++        <option value="<%= app %>"><%= app %></option>
++      <% end %>
++    </datalist>
++    <button type="submit" phx-disable-with="Searching...">Go to Hexdocs</button>
++  </form>
++</section>
++
++<section class="row">
++  <article class="column">
++    <h2>Resources</h2>
++    <ul>
++      <li>
++        <a href="https://hexdocs.pm/phoenix/overview.html">Guides &amp; Docs</a>
++      </li>
++      <li>
++        <a href="https://github.com/phoenixframework/phoenix">Source</a>
++      </li>
++      <li>
++        <a href="https://github.com/phoenixframework/phoenix/blob/v1.5/CHANGELOG.md">v1.5 Changelog</a>
++      </li>
++    </ul>
++  </article>
++  <article class="column">
++    <h2>Help</h2>
++    <ul>
++      <li>
++        <a href="https://elixirforum.com/c/phoenix-forum">Forum</a>
++      </li>
++      <li>
++        <a href="https://webchat.freenode.net/?channels=elixir-lang">#elixir-lang on Freenode IRC</a>
++      </li>
++      <li>
++        <a href="https://twitter.com/elixirphoenix">Twitter @elixirphoenix</a>
++      </li>
++      <li>
++        <a href="https://elixir-slackin.herokuapp.com/">Elixir on Slack</a>
++      </li>
++    </ul>
++  </article>
++</section>
+diff --git apps/my_app_web/lib/my_app_web/router.ex apps/my_app_web/lib/my_app_web/router.ex
+index 5f5f6fc..d7a49da 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ apps/my_app_web/lib/my_app_web/router.ex
+@@ -1,11 +1,27 @@
+ defmodule MyAppWeb.Router do
+   use MyAppWeb, :router
+ 
++  pipeline :browser do
++    plug :accepts, ["html"]
++    plug :fetch_session
++    plug :fetch_live_flash
++    plug :put_root_layout, {MyAppWeb.LayoutView, :root}
++    plug :protect_from_forgery
++    plug :put_secure_browser_headers
++  end
++
+   pipeline :api do
+     plug :accepts, ["json"]
+   end
+ 
+-  scope "/api", MyAppWeb do
+-    pipe_through :api
++  scope "/", MyAppWeb do
++    pipe_through :browser
++
++    live "/", PageLive, :index
+   end
++
++  # Other scopes may use custom stacks.
++  # scope "/api", MyAppWeb do
++  #   pipe_through :api
++  # end
+ end
+diff --git a/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+new file mode 100644
+index 0000000..09ffdad
+--- /dev/null
++++ apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+@@ -0,0 +1,5 @@
++<main role="main" class="container">
++  <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
++  <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
++  <%= @inner_content %>
++</main>
+diff --git a/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex
+new file mode 100644
+index 0000000..8dcded5
+--- /dev/null
++++ apps/my_app_web/lib/my_app_web/templates/layout/live.html.leex
+@@ -0,0 +1,11 @@
++<main role="main" class="container">
++  <p class="alert alert-info" role="alert"
++    phx-click="lv:clear-flash"
++    phx-value-key="info"><%= live_flash(@flash, :info) %></p>
++
++  <p class="alert alert-danger" role="alert"
++    phx-click="lv:clear-flash"
++    phx-value-key="error"><%= live_flash(@flash, :error) %></p>
++
++  <%= @inner_content %>
++</main>
+diff --git a/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
+new file mode 100644
+index 0000000..d3b97a7
+--- /dev/null
++++ apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
+@@ -0,0 +1,28 @@
++<!DOCTYPE html>
++<html lang="en">
++  <head>
++    <meta charset="utf-8"/>
++    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
++    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
++    <%= csrf_meta_tag() %>
++    <%= live_title_tag assigns[:page_title] || "MyApp", suffix: " · Phoenix Framework" %>
++    <link phx-track-static rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
++    <script defer phx-track-static type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
++  </head>
++  <body>
++    <header>
++      <section class="container">
++        <nav role="navigation">
++          <ul>
++            <li><a href="https://hexdocs.pm/phoenix/overview.html">Get Started</a></li>
++            
++          </ul>
++        </nav>
++        <a href="https://phoenixframework.org/" class="phx-logo">
++          <img src="<%= Routes.static_path(@conn, "/images/phoenix.png") %>" alt="Phoenix Framework Logo"/>
++        </a>
++      </section>
++    </header>
++    <%= @inner_content %>
++  </body>
++</html>
+diff --git apps/my_app_web/lib/my_app_web/views/error_helpers.ex apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+index dd1c1c4..a250bf2 100644
+--- apps/my_app_web/lib/my_app_web/views/error_helpers.ex
++++ apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+@@ -3,6 +3,20 @@ defmodule MyAppWeb.ErrorHelpers do
+   Conveniences for translating and building error messages.
+   """
+ 
++  use Phoenix.HTML
++
++  @doc """
++  Generates tag for inlined form input errors.
++  """
++  def error_tag(form, field) do
++    Enum.map(Keyword.get_values(form.errors, field), fn error ->
++      content_tag(:span, translate_error(error),
++        class: "invalid-feedback",
++        phx_feedback_for: input_id(form, field)
++      )
++    end)
++  end
++
+   @doc """
+   Translates an error message.
+   """
+diff --git apps/my_app_web/lib/my_app_web/views/error_view.ex apps/my_app_web/lib/my_app_web/views/error_view.ex
+index 6bc5b14..ce4cf28 100644
+--- apps/my_app_web/lib/my_app_web/views/error_view.ex
++++ apps/my_app_web/lib/my_app_web/views/error_view.ex
+@@ -3,14 +3,14 @@ defmodule MyAppWeb.ErrorView do
+ 
+   # If you want to customize a particular status code
+   # for a certain format, you may uncomment below.
+-  # def render("500.json", _assigns) do
+-  #   %{errors: %{detail: "Internal Server Error"}}
++  # def render("500.html", _assigns) do
++  #   "Internal Server Error"
+   # end
+ 
+   # By default, Phoenix returns the status message from
+-  # the template name. For example, "404.json" becomes
++  # the template name. For example, "404.html" becomes
+   # "Not Found".
+   def template_not_found(template, _assigns) do
+-    %{errors: %{detail: Phoenix.Controller.status_message_from_template(template)}}
++    Phoenix.Controller.status_message_from_template(template)
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/lib/my_app_web/views/layout_view.ex apps/my_app_web/lib/my_app_web/views/layout_view.ex
+new file mode 100644
+index 0000000..80fc067
+--- /dev/null
++++ apps/my_app_web/lib/my_app_web/views/layout_view.ex
+@@ -0,0 +1,3 @@
++defmodule MyAppWeb.LayoutView do
++  use MyAppWeb, :view
++end
+diff --git apps/my_app_web/lib/my_app_web.ex apps/my_app_web/lib/my_app_web.ex
+index 1f75dac..f3f5856 100644
+--- apps/my_app_web/lib/my_app_web.ex
++++ apps/my_app_web/lib/my_app_web.ex
+@@ -41,12 +41,30 @@ defmodule MyAppWeb do
+     end
+   end
+ 
++  def live_view do
++    quote do
++      use Phoenix.LiveView,
++        layout: {MyAppWeb.LayoutView, "live.html"}
++
++      unquote(view_helpers())
++    end
++  end
++
++  def live_component do
++    quote do
++      use Phoenix.LiveComponent
++
++      unquote(view_helpers())
++    end
++  end
++
+   def router do
+     quote do
+       use Phoenix.Router
+ 
+       import Plug.Conn
+       import Phoenix.Controller
++      import Phoenix.LiveView.Router
+     end
+   end
+ 
+@@ -58,6 +76,12 @@ defmodule MyAppWeb do
+ 
+   defp view_helpers do
+     quote do
++      # Use all HTML functionality (forms, tags, etc)
++      use Phoenix.HTML
++
++      # Import LiveView helpers (live_render, live_component, live_patch, etc)
++      import Phoenix.LiveView.Helpers
++
+       # Import basic rendering functionality (render, render_layout, etc)
+       import Phoenix.View
+ 
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index 39f999f..fb098ea 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -38,6 +38,10 @@ defmodule MyAppWeb.MixProject do
+   defp deps do
+     [
+       {:phoenix, "~> 1.5.7"},
++      {:phoenix_live_view, "~> 0.15.0"},
++      {:floki, ">= 0.27.0", only: :test},
++      {:phoenix_html, "~> 2.11"},
++      {:phoenix_live_reload, "~> 1.2", only: :dev},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+       {:my_app, in_umbrella: true},
+diff --git a/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/test/my_app_web/live/page_live_test.exs apps/my_app_web/test/my_app_web/live/page_live_test.exs
+new file mode 100644
+index 0000000..7d971b0
+--- /dev/null
++++ apps/my_app_web/test/my_app_web/live/page_live_test.exs
+@@ -0,0 +1,11 @@
++defmodule MyAppWeb.PageLiveTest do
++  use MyAppWeb.ConnCase
++
++  import Phoenix.LiveViewTest
++
++  test "disconnected and connected render", %{conn: conn} do
++    {:ok, page_live, disconnected_html} = live(conn, "/")
++    assert disconnected_html =~ "Welcome to Phoenix!"
++    assert render(page_live) =~ "Welcome to Phoenix!"
++  end
++end
+diff --git apps/my_app_web/test/my_app_web/views/error_view_test.exs apps/my_app_web/test/my_app_web/views/error_view_test.exs
+index 05a065b..770b34b 100644
+--- apps/my_app_web/test/my_app_web/views/error_view_test.exs
++++ apps/my_app_web/test/my_app_web/views/error_view_test.exs
+@@ -4,12 +4,11 @@ defmodule MyAppWeb.ErrorViewTest do
+   # Bring render/3 and render_to_string/3 for testing custom views
+   import Phoenix.View
+ 
+-  test "renders 404.json" do
+-    assert render(MyAppWeb.ErrorView, "404.json", []) == %{errors: %{detail: "Not Found"}}
++  test "renders 404.html" do
++    assert render_to_string(MyAppWeb.ErrorView, "404.html", []) == "Not Found"
+   end
+ 
+-  test "renders 500.json" do
+-    assert render(MyAppWeb.ErrorView, "500.json", []) ==
+-             %{errors: %{detail: "Internal Server Error"}}
++  test "renders 500.html" do
++    assert render_to_string(MyAppWeb.ErrorView, "500.html", []) == "Internal Server Error"
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/binaryid-database-noecto-nogettext-umbrella-live-nodash/apps/my_app_web/test/my_app_web/views/layout_view_test.exs apps/my_app_web/test/my_app_web/views/layout_view_test.exs
+new file mode 100644
+index 0000000..e1e43f4
+--- /dev/null
++++ apps/my_app_web/test/my_app_web/views/layout_view_test.exs
+@@ -0,0 +1,8 @@
++defmodule MyAppWeb.LayoutViewTest do
++  use MyAppWeb.ConnCase, async: true
++
++  # When testing helpers, you may want to import Phoenix.HTML and
++  # use functions such as safe_to_string() to convert the helper
++  # result into an HTML string.
++  # import Phoenix.HTML
++end
+diff --git config/config.exs config/config.exs
+index f0c7234..173ca58 100644
+--- config/config.exs
++++ config/config.exs
+@@ -12,13 +12,13 @@ use Mix.Config
+ 
+ 
+ config :my_app_web,
+-  generators: [context_app: :my_app]
++  generators: [context_app: :my_app, binary_id: true]
+ 
+ # Configures the endpoint
+ config :my_app_web, MyAppWeb.Endpoint,
+   url: [host: "localhost"],
+   secret_key_base: "[redacted]",
+-  render_errors: [view: MyAppWeb.ErrorView, accepts: ~w(json), layout: false],
++  render_errors: [view: MyAppWeb.ErrorView, accepts: ~w(html json), layout: false],
+   pubsub_server: MyApp.PubSub,
+   live_view: [signing_salt: "[redacted]"]
+ 
+diff --git config/dev.exs config/dev.exs
+index 5622e68..407b9f8 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -45,6 +45,16 @@ config :my_app_web, MyAppWeb.Endpoint,
+ # configured to run both http and https servers on
+ # different ports.
+ 
++# Watch static and templates for browser reloading.
++config :my_app_web, MyAppWeb.Endpoint,
++  live_reload: [
++    patterns: [
++      ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
++      ~r"lib/my_app_web/(live|views)/.*(ex)$",
++      ~r"lib/my_app_web/templates/.*(eex)$"
++    ]
++  ]
++
+ # Do not include metadata nor timestamps in development logs
+ config :logger, :console, format: "[$level] $message\n"
+ 

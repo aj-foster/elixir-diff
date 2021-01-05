@@ -1,0 +1,26 @@
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index 401af5c..638d644 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,7 +7,7 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "svip1OZW"
++    signing_salt: "uCI5HpDL"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+diff --git config/config.exs config/config.exs
+index f0c7234..b6d8a6c 100644
+--- config/config.exs
++++ config/config.exs
+@@ -12,7 +12,7 @@ use Mix.Config
+ 
+ 
+ config :my_app_web,
+-  generators: [context_app: :my_app]
++  generators: [context_app: :my_app, binary_id: true]
+ 
+ # Configures the endpoint
+ config :my_app_web, MyAppWeb.Endpoint,

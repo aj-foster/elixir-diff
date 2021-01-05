@@ -1,0 +1,136 @@
+diff --git apps/my_app/lib/my_app/repo.ex apps/my_app/lib/my_app/repo.ex
+index 595ff57..c623d89 100644
+--- apps/my_app/lib/my_app/repo.ex
++++ apps/my_app/lib/my_app/repo.ex
+@@ -1,5 +1,5 @@
+ defmodule MyApp.Repo do
+   use Ecto.Repo,
+     otp_app: :my_app,
+-    adapter: Ecto.Adapters.Postgres
++    adapter: Ecto.Adapters.MyXQL
+ end
+diff --git apps/my_app/mix.exs apps/my_app/mix.exs
+index 8cbc8b8..7cf924c 100644
+--- apps/my_app/mix.exs
++++ apps/my_app/mix.exs
+@@ -38,7 +38,7 @@ defmodule MyApp.MixProject do
+     [
+       {:phoenix_pubsub, "~> 2.0"},
+       {:ecto_sql, "~> 3.4"},
+-      {:postgrex, ">= 0.0.0"},
++      {:myxql, ">= 0.0.0"},
+       {:jason, "~> 1.0"}
+     ]
+   end
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index 15b774e..9130e52 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,13 +7,15 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "LoRXoFuB"
++    signing_salt: "0o+y4lcB"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+     websocket: true,
+     longpoll: false
+ 
++  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
++
+   # Serve at "/" the static files from "priv/static" directory.
+   #
+   # You should set gzip to true if you are running phx.digest
+@@ -31,6 +33,10 @@ defmodule MyAppWeb.Endpoint do
+     plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app_web
+   end
+ 
++  plug Phoenix.LiveDashboard.RequestLogger,
++    param_key: "request_logger",
++    cookie_key: "request_logger"
++
+   plug Plug.RequestId
+   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+ 
+diff --git apps/my_app_web/lib/my_app_web/router.ex apps/my_app_web/lib/my_app_web/router.ex
+index 5f5f6fc..4abdff1 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ apps/my_app_web/lib/my_app_web/router.ex
+@@ -8,4 +8,20 @@ defmodule MyAppWeb.Router do
+   scope "/api", MyAppWeb do
+     pipe_through :api
+   end
++
++  # Enables LiveDashboard only for development
++  #
++  # If you want to use the LiveDashboard in production, you should put
++  # it behind authentication and allow only admins to access it.
++  # If your application does not have an admins-only section yet,
++  # you can use Plug.BasicAuth to set up some basic authentication
++  # as long as you are also using SSL (which you should anyway).
++  if Mix.env() in [:dev, :test] do
++    import Phoenix.LiveDashboard.Router
++
++    scope "/" do
++      pipe_through [:fetch_session, :protect_from_forgery]
++      live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
++    end
++  end
+ end
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index 70e578e..573323c 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -39,6 +39,7 @@ defmodule MyAppWeb.MixProject do
+     [
+       {:phoenix, "~> 1.5.7"},
+       {:phoenix_ecto, "~> 4.0"},
++      {:phoenix_live_dashboard, "~> 0.4"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+       {:my_app, in_umbrella: true},
+diff --git config/config.exs config/config.exs
+index 9a0a3ed..cd1a522 100644
+--- config/config.exs
++++ config/config.exs
+@@ -15,7 +15,7 @@ config :my_app,
+ 
+ config :my_app_web,
+   ecto_repos: [MyApp.Repo],
+-  generators: [context_app: :my_app, binary_id: true]
++  generators: [context_app: :my_app]
+ 
+ # Configures the endpoint
+ config :my_app_web, MyAppWeb.Endpoint,
+diff --git config/dev.exs config/dev.exs
+index e7fd051..5e7aa04 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -2,8 +2,8 @@ use Mix.Config
+ 
+ # Configure your database
+ config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
++  username: "root",
++  password: "",
+   database: "my_app_dev",
+   hostname: "localhost",
+   show_sensitive_data_on_connection_error: true,
+diff --git config/test.exs config/test.exs
+index a885229..d357643 100644
+--- config/test.exs
++++ config/test.exs
+@@ -6,8 +6,8 @@ use Mix.Config
+ # to provide built-in test partitioning in CI environment.
+ # Run `mix help test` for more information.
+ config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
++  username: "root",
++  password: "",
+   database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
+   hostname: "localhost",
+   pool: Ecto.Adapters.SQL.Sandbox

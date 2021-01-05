@@ -1,0 +1,576 @@
+diff --git apps/my_app/.formatter.exs apps/my_app/.formatter.exs
+index 3d8ce11..db86148 100644
+--- apps/my_app/.formatter.exs
++++ apps/my_app/.formatter.exs
+@@ -1,3 +1,5 @@
+ [
+-  inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
++  import_deps: [:ecto],
++  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
++  subdirectories: ["priv/*/migrations"]
+ ]
+diff --git apps/my_app/lib/my_app/application.ex apps/my_app/lib/my_app/application.ex
+index d968a2f..d2aa950 100644
+--- apps/my_app/lib/my_app/application.ex
++++ apps/my_app/lib/my_app/application.ex
+@@ -7,6 +7,8 @@ defmodule MyApp.Application do
+ 
+   def start(_type, _args) do
+     children = [
++      # Start the Ecto repository
++      MyApp.Repo,
+       # Start the PubSub system
+       {Phoenix.PubSub, name: MyApp.PubSub}
+       # Start a worker by calling: MyApp.Worker.start_link(arg)
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nowebpack-umbrella/apps/my_app/lib/my_app/repo.ex apps/my_app/lib/my_app/repo.ex
+new file mode 100644
+index 0000000..c623d89
+--- /dev/null
++++ apps/my_app/lib/my_app/repo.ex
+@@ -0,0 +1,5 @@
++defmodule MyApp.Repo do
++  use Ecto.Repo,
++    otp_app: :my_app,
++    adapter: Ecto.Adapters.MyXQL
++end
+diff --git apps/my_app/mix.exs apps/my_app/mix.exs
+index 07cf694..7cf924c 100644
+--- apps/my_app/mix.exs
++++ apps/my_app/mix.exs
+@@ -36,7 +36,10 @@ defmodule MyApp.MixProject do
+   # Type `mix help deps` for examples and options.
+   defp deps do
+     [
+-      {:phoenix_pubsub, "~> 2.0"}
++      {:phoenix_pubsub, "~> 2.0"},
++      {:ecto_sql, "~> 3.4"},
++      {:myxql, ">= 0.0.0"},
++      {:jason, "~> 1.0"}
+     ]
+   end
+ 
+@@ -45,7 +48,10 @@ defmodule MyApp.MixProject do
+   # See the documentation for `Mix` for more info on aliases.
+   defp aliases do
+     [
+-      setup: ["deps.get"]
++      setup: ["deps.get", "ecto.setup"],
++      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
++      "ecto.reset": ["ecto.drop", "ecto.setup"],
++      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+     ]
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nowebpack-umbrella/apps/my_app/priv/repo/migrations/.formatter.exs apps/my_app/priv/repo/migrations/.formatter.exs
+new file mode 100644
+index 0000000..49f9151
+--- /dev/null
++++ apps/my_app/priv/repo/migrations/.formatter.exs
+@@ -0,0 +1,4 @@
++[
++  import_deps: [:ecto_sql],
++  inputs: ["*.exs"]
++]
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nowebpack-umbrella/apps/my_app/priv/repo/seeds.exs apps/my_app/priv/repo/seeds.exs
+new file mode 100644
+index 0000000..e4ba004
+--- /dev/null
++++ apps/my_app/priv/repo/seeds.exs
+@@ -0,0 +1,11 @@
++# Script for populating the database. You can run it as:
++#
++#     mix run priv/repo/seeds.exs
++#
++# Inside the script, you can read and write to any of your
++# repositories directly:
++#
++#     MyApp.Repo.insert!(%MyApp.SomeSchema{})
++#
++# We recommend using the bang functions (`insert!`, `update!`
++# and so on) as they will fail if something goes wrong.
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nowebpack-umbrella/apps/my_app/test/support/data_case.ex apps/my_app/test/support/data_case.ex
+new file mode 100644
+index 0000000..774d271
+--- /dev/null
++++ apps/my_app/test/support/data_case.ex
+@@ -0,0 +1,55 @@
++defmodule MyApp.DataCase do
++  @moduledoc """
++  This module defines the setup for tests requiring
++  access to the application's data layer.
++
++  You may define functions here to be used as helpers in
++  your tests.
++
++  Finally, if the test case interacts with the database,
++  we enable the SQL sandbox, so changes done to the database
++  are reverted at the end of every test. If you are using
++  PostgreSQL, you can even run database tests asynchronously
++  by setting `use MyApp.DataCase, async: true`, although
++  this option is not recommended for other databases.
++  """
++
++  use ExUnit.CaseTemplate
++
++  using do
++    quote do
++      alias MyApp.Repo
++
++      import Ecto
++      import Ecto.Changeset
++      import Ecto.Query
++      import MyApp.DataCase
++    end
++  end
++
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
++    :ok
++  end
++
++  @doc """
++  A helper that transforms changeset errors into a map of messages.
++
++      assert {:error, changeset} = Accounts.create_user(%{password: "short"})
++      assert "password is too short" in errors_on(changeset).password
++      assert %{password: ["password is too short"]} = errors_on(changeset)
++
++  """
++  def errors_on(changeset) do
++    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
++      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
++        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
++      end)
++    end)
++  end
++end
+diff --git apps/my_app/test/test_helper.exs apps/my_app/test/test_helper.exs
+index 869559e..0491a89 100644
+--- apps/my_app/test/test_helper.exs
++++ apps/my_app/test/test_helper.exs
+@@ -1 +1,2 @@
+ ExUnit.start()
++Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
+diff --git apps/my_app_web/README.md apps/my_app_web/README.md
+index 4dcdde3..4ad1cbb 100644
+--- apps/my_app_web/README.md
++++ apps/my_app_web/README.md
+@@ -3,6 +3,7 @@
+ To start your Phoenix server:
+ 
+   * Install dependencies with `mix deps.get`
++  * Create and migrate your database with `mix ecto.setup`
+   * Start Phoenix endpoint with `mix phx.server`
+ 
+ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index bdefc93..31c9703 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,13 +7,15 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "+yKV9KBJ"
++    signing_salt: "CoQ/9ygd"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+     websocket: true,
+     longpoll: false
+ 
++  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
++
+   # Serve at "/" the static files from "priv/static" directory.
+   #
+   # You should set gzip to true if you are running phx.digest
+@@ -30,8 +32,13 @@ defmodule MyAppWeb.Endpoint do
+     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+     plug Phoenix.LiveReloader
+     plug Phoenix.CodeReloader
++    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app_web
+   end
+ 
++  plug Phoenix.LiveDashboard.RequestLogger,
++    param_key: "request_logger",
++    cookie_key: "request_logger"
++
+   plug Plug.RequestId
+   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+ 
+diff --git apps/my_app_web/lib/my_app_web/gettext.ex b/projects/phoenix/1.5.7/binaryid-noecto-nowebpack-umbrella-nodash/apps/my_app_web/lib/my_app_web/gettext.ex
+deleted file mode 100644
+index 9c6644d..0000000
+--- apps/my_app_web/lib/my_app_web/gettext.ex
++++ /dev/null
+@@ -1,24 +0,0 @@
+-defmodule MyAppWeb.Gettext do
+-  @moduledoc """
+-  A module providing Internationalization with a gettext-based API.
+-
+-  By using [Gettext](https://hexdocs.pm/gettext),
+-  your module gains a set of macros for translations, for example:
+-
+-      import MyAppWeb.Gettext
+-
+-      # Simple translation
+-      gettext("Here is the string to translate")
+-
+-      # Plural translation
+-      ngettext("Here is the string to translate",
+-               "Here are the strings to translate",
+-               3)
+-
+-      # Domain-based translation
+-      dgettext("errors", "Here is the error message to translate")
+-
+-  See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
+-  """
+-  use Gettext, otp_app: :my_app_web
+-end
+diff --git apps/my_app_web/lib/my_app_web/router.ex apps/my_app_web/lib/my_app_web/router.ex
+index 8309276..b65151f 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ apps/my_app_web/lib/my_app_web/router.ex
+@@ -23,4 +23,20 @@ defmodule MyAppWeb.Router do
+   # scope "/api", MyAppWeb do
+   #   pipe_through :api
+   # end
++
++  # Enables LiveDashboard only for development
++  #
++  # If you want to use the LiveDashboard in production, you should put
++  # it behind authentication and allow only admins to access it.
++  # If your application does not have an admins-only section yet,
++  # you can use Plug.BasicAuth to set up some basic authentication
++  # as long as you are also using SSL (which you should anyway).
++  if Mix.env() in [:dev, :test] do
++    import Phoenix.LiveDashboard.Router
++
++    scope "/" do
++      pipe_through :browser
++      live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
++    end
++  end
+ end
+diff --git apps/my_app_web/lib/my_app_web/telemetry.ex apps/my_app_web/lib/my_app_web/telemetry.ex
+index 9f50f3d..2c9c8ae 100644
+--- apps/my_app_web/lib/my_app_web/telemetry.ex
++++ apps/my_app_web/lib/my_app_web/telemetry.ex
+@@ -30,6 +30,13 @@ defmodule MyAppWeb.Telemetry do
+         unit: {:native, :millisecond}
+       ),
+ 
++      # Database Metrics
++      summary("my_app.repo.query.total_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.decode_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.query_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.queue_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.idle_time", unit: {:native, :millisecond}),
++
+       # VM Metrics
+       summary("vm.memory.total", unit: {:byte, :kilobyte}),
+       summary("vm.total_run_queue_lengths.total"),
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+index 981504d..83d4670 100644
+--- apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
++++ apps/my_app_web/lib/my_app_web/templates/layout/app.html.eex
+@@ -14,7 +14,9 @@
+         <nav role="navigation">
+           <ul>
+             <li><a href="https://hexdocs.pm/phoenix/overview.html">Get Started</a></li>
+-            
++            <%= if function_exported?(Routes, :live_dashboard_path, 2) do %>
++              <li><%= link "LiveDashboard", to: Routes.live_dashboard_path(@conn, :home) %></li>
++            <% end %>
+           </ul>
+         </nav>
+         <a href="https://phoenixframework.org/" class="phx-logo">
+diff --git apps/my_app_web/lib/my_app_web/templates/page/index.html.eex apps/my_app_web/lib/my_app_web/templates/page/index.html.eex
+index dd0a7f8..479197d 100644
+--- apps/my_app_web/lib/my_app_web/templates/page/index.html.eex
++++ apps/my_app_web/lib/my_app_web/templates/page/index.html.eex
+@@ -1,5 +1,5 @@
+ <section class="phx-hero">
+-  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
++  <h1>Welcome to Phoenix!</h1>
+   <p>Peace of mind from prototype to production</p>
+ </section>
+ 
+diff --git apps/my_app_web/lib/my_app_web/views/error_helpers.ex apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+index 9b530af..a250bf2 100644
+--- apps/my_app_web/lib/my_app_web/views/error_helpers.ex
++++ apps/my_app_web/lib/my_app_web/views/error_helpers.ex
+@@ -18,30 +18,13 @@ defmodule MyAppWeb.ErrorHelpers do
+   end
+ 
+   @doc """
+-  Translates an error message using gettext.
++  Translates an error message.
+   """
+   def translate_error({msg, opts}) do
+-    # When using gettext, we typically pass the strings we want
+-    # to translate as a static argument:
+-    #
+-    #     # Translate "is invalid" in the "errors" domain
+-    #     dgettext("errors", "is invalid")
+-    #
+-    #     # Translate the number of files with plural rules
+-    #     dngettext("errors", "1 file", "%{count} files", count)
+-    #
+     # Because the error messages we show in our forms and APIs
+     # are defined inside Ecto, we need to translate them dynamically.
+-    # This requires us to call the Gettext module passing our gettext
+-    # backend as first argument.
+-    #
+-    # Note we use the "errors" domain, which means translations
+-    # should be written to the errors.po file. The :count option is
+-    # set by Ecto and indicates we should also apply plural rules.
+-    if count = opts[:count] do
+-      Gettext.dngettext(MyAppWeb.Gettext, "errors", msg, msg, count, opts)
+-    else
+-      Gettext.dgettext(MyAppWeb.Gettext, "errors", msg, opts)
+-    end
++    Enum.reduce(opts, msg, fn {key, value}, acc ->
++      String.replace(acc, "%{#{key}}", to_string(value))
++    end)
+   end
+ end
+diff --git apps/my_app_web/lib/my_app_web.ex apps/my_app_web/lib/my_app_web.ex
+index e01f880..7a894e8 100644
+--- apps/my_app_web/lib/my_app_web.ex
++++ apps/my_app_web/lib/my_app_web.ex
+@@ -22,7 +22,6 @@ defmodule MyAppWeb do
+       use Phoenix.Controller, namespace: MyAppWeb
+ 
+       import Plug.Conn
+-      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+@@ -54,7 +53,6 @@ defmodule MyAppWeb do
+   def channel do
+     quote do
+       use Phoenix.Channel
+-      import MyAppWeb.Gettext
+     end
+   end
+ 
+@@ -67,7 +65,6 @@ defmodule MyAppWeb do
+       import Phoenix.View
+ 
+       import MyAppWeb.ErrorHelpers
+-      import MyAppWeb.Gettext
+       alias MyAppWeb.Router.Helpers, as: Routes
+     end
+   end
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index 8e988c3..639b1ec 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -11,7 +11,7 @@ defmodule MyAppWeb.MixProject do
+       lockfile: "../../mix.lock",
+       elixir: "~> 1.7",
+       elixirc_paths: elixirc_paths(Mix.env()),
+-      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
++      compilers: [:phoenix] ++ Mix.compilers(),
+       start_permanent: Mix.env() == :prod,
+       aliases: aliases(),
+       deps: deps()
+@@ -38,11 +38,12 @@ defmodule MyAppWeb.MixProject do
+   defp deps do
+     [
+       {:phoenix, "~> 1.5.7"},
++      {:phoenix_ecto, "~> 4.0"},
+       {:phoenix_html, "~> 2.11"},
+       {:phoenix_live_reload, "~> 1.2", only: :dev},
++      {:phoenix_live_dashboard, "~> 0.4"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+-      {:gettext, "~> 0.11"},
+       {:my_app, in_umbrella: true},
+       {:jason, "~> 1.0"},
+       {:plug_cowboy, "~> 2.0"}
+@@ -54,7 +55,8 @@ defmodule MyAppWeb.MixProject do
+   # See the documentation for `Mix` for more info on aliases.
+   defp aliases do
+     [
+-      setup: ["deps.get"]
++      setup: ["deps.get"],
++      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+     ]
+   end
+ end
+diff --git apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po b/projects/phoenix/1.5.7/binaryid-noecto-nowebpack-umbrella-nodash/apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
+deleted file mode 100644
+index cdec3a1..0000000
+--- apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
++++ /dev/null
+@@ -1,11 +0,0 @@
+-## `msgid`s in this file come from POT (.pot) files.
+-##
+-## Do not add, change, or remove `msgid`s manually here as
+-## they're tied to the ones in the corresponding POT file
+-## (with the same domain).
+-##
+-## Use `mix gettext.extract --merge` or `mix gettext.merge`
+-## to merge POT files into PO files.
+-msgid ""
+-msgstr ""
+-"Language: en\n"
+diff --git apps/my_app_web/priv/gettext/errors.pot b/projects/phoenix/1.5.7/binaryid-noecto-nowebpack-umbrella-nodash/apps/my_app_web/priv/gettext/errors.pot
+deleted file mode 100644
+index d6f47fa..0000000
+--- apps/my_app_web/priv/gettext/errors.pot
++++ /dev/null
+@@ -1,10 +0,0 @@
+-## This is a PO Template file.
+-##
+-## `msgid`s here are often extracted from source code.
+-## Add new translations manually only if they're dynamic
+-## translations that can't be statically extracted.
+-##
+-## Run `mix gettext.extract` to bring this file up to
+-## date. Leave `msgstr`s empty as changing them here has no
+-## effect: edit them in PO (`.po`) files instead.
+-
+diff --git apps/my_app_web/test/support/channel_case.ex apps/my_app_web/test/support/channel_case.ex
+index 2a1dfdb..831b300 100644
+--- apps/my_app_web/test/support/channel_case.ex
++++ apps/my_app_web/test/support/channel_case.ex
+@@ -28,7 +28,13 @@ defmodule MyAppWeb.ChannelCase do
+     end
+   end
+ 
+-  setup _tags do
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
+     :ok
+   end
+ end
+diff --git apps/my_app_web/test/support/conn_case.ex apps/my_app_web/test/support/conn_case.ex
+index ae658eb..a1d99dc 100644
+--- apps/my_app_web/test/support/conn_case.ex
++++ apps/my_app_web/test/support/conn_case.ex
+@@ -31,7 +31,13 @@ defmodule MyAppWeb.ConnCase do
+     end
+   end
+ 
+-  setup _tags do
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
+     {:ok, conn: Phoenix.ConnTest.build_conn()}
+   end
+ end
+diff --git apps/my_app_web/test/test_helper.exs apps/my_app_web/test/test_helper.exs
+index 869559e..0491a89 100644
+--- apps/my_app_web/test/test_helper.exs
++++ apps/my_app_web/test/test_helper.exs
+@@ -1 +1,2 @@
+ ExUnit.start()
++Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
+diff --git config/config.exs config/config.exs
+index 173ca58..34378a3 100644
+--- config/config.exs
++++ config/config.exs
+@@ -9,9 +9,12 @@
+ # move said applications out of the umbrella.
+ use Mix.Config
+ 
+-
++# Configure Mix tasks and generators
++config :my_app,
++  ecto_repos: [MyApp.Repo]
+ 
+ config :my_app_web,
++  ecto_repos: [MyApp.Repo],
+   generators: [context_app: :my_app, binary_id: true]
+ 
+ # Configures the endpoint
+diff --git config/dev.exs config/dev.exs
+index b2cb24d..024c402 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -1,5 +1,14 @@
+ use Mix.Config
+ 
++# Configure your database
++config :my_app, MyApp.Repo,
++  username: "root",
++  password: "",
++  database: "my_app_dev",
++  hostname: "localhost",
++  show_sensitive_data_on_connection_error: true,
++  pool_size: 10
++
+ # For development, we disable any cache and enable
+ # debugging and code reloading.
+ #
+@@ -42,7 +51,6 @@ config :my_app_web, MyAppWeb.Endpoint,
+   live_reload: [
+     patterns: [
+       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
+-      ~r"priv/gettext/.*(po)$",
+       ~r"lib/my_app_web/(live|views)/.*(ex)$",
+       ~r"lib/my_app_web/templates/.*(eex)$"
+     ]
+diff --git config/prod.secret.exs config/prod.secret.exs
+index 702c128..b201076 100644
+--- config/prod.secret.exs
++++ config/prod.secret.exs
+@@ -4,6 +4,18 @@
+ # remember to add this file to your .gitignore.
+ use Mix.Config
+ 
++database_url =
++  System.get_env("DATABASE_URL") ||
++    raise """
++    environment variable DATABASE_URL is missing.
++    For example: ecto://USER:PASS@HOST/DATABASE
++    """
++
++config :my_app, MyApp.Repo,
++  # ssl: true,
++  url: database_url,
++  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
++
+ secret_key_base =
+   System.get_env("SECRET_KEY_BASE") ||
+     raise """
+diff --git config/test.exs config/test.exs
+index 8fd529b..d357643 100644
+--- config/test.exs
++++ config/test.exs
+@@ -1,5 +1,17 @@
+ use Mix.Config
+ 
++# Configure your database
++#
++# The MIX_TEST_PARTITION environment variable can be used
++# to provide built-in test partitioning in CI environment.
++# Run `mix help test` for more information.
++config :my_app, MyApp.Repo,
++  username: "root",
++  password: "",
++  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
++  hostname: "localhost",
++  pool: Ecto.Adapters.SQL.Sandbox
++
+ # We don't run a server during test. If one is required,
+ # you can enable the server option below.
+ config :my_app_web, MyAppWeb.Endpoint,

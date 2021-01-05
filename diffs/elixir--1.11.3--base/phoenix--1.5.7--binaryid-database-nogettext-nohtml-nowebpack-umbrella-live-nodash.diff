@@ -1,0 +1,250 @@
+diff --git .formatter.exs .formatter.exs
+index d2cda26..6915976 100644
+--- .formatter.exs
++++ .formatter.exs
+@@ -1,4 +1,4 @@
+-# Used by "mix format"
+ [
+-  inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"]
++  inputs: ["mix.exs", "config/*.exs"],
++  subdirectories: ["apps/*"]
+ ]
+diff --git .gitignore .gitignore
+index 2be4a13..12179ea 100644
+--- .gitignore
++++ .gitignore
+@@ -7,7 +7,7 @@
+ # The directory Mix downloads your dependencies sources to.
+ /deps/
+ 
+-# Where third-party dependencies like ExDoc output generated docs.
++# Where 3rd-party dependencies like ExDoc output generated docs.
+ /doc/
+ 
+ # Ignore .fetch files in case you like to edit your project deps locally.
+@@ -18,10 +18,3 @@ erl_crash.dump
+ 
+ # Also ignore archive artifacts (built via "mix archive.build").
+ *.ez
+-
+-# Ignore package tarball (built via "mix hex.build").
+-my_app-*.tar
+-
+-
+-# Temporary files for e.g. tests
+-/tmp
+diff --git README.md README.md
+index a0b6bf0..729adca 100644
+--- README.md
++++ README.md
+@@ -1,21 +1 @@
+-# MyApp
+-
+-**TODO: Add description**
+-
+-## Installation
+-
+-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+-by adding `my_app` to your list of dependencies in `mix.exs`:
+-
+-```elixir
+-def deps do
+-  [
+-    {:my_app, "~> 0.1.0"}
+-  ]
+-end
+-```
+-
+-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
+-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
+-be found at [https://hexdocs.pm/my_app](https://hexdocs.pm/my_app).
+-
++# MyApp.Umbrella
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nohtml-nowebpack-umbrella-live-nodash/config/config.exs config/config.exs
+new file mode 100644
+index 0000000..0284598
+--- /dev/null
++++ config/config.exs
+@@ -0,0 +1,22 @@
++# This file is responsible for configuring your umbrella
++# and **all applications** and their dependencies with the
++# help of Mix.Config.
++#
++# Note that all applications in your umbrella share the
++# same configuration and dependencies, which is why they
++# all use the same configuration file. If you want different
++# configurations or dependencies per app, it is best to
++# move said applications out of the umbrella.
++use Mix.Config
++
++# Configures Elixir's Logger
++config :logger, :console,
++  format: "$time $metadata[$level] $message\n",
++  metadata: [:request_id]
++
++# Use Jason for JSON parsing in Phoenix
++config :phoenix, :json_library, Jason
++
++# Import environment specific config. This must remain at the bottom
++# of this file so it overrides the configuration defined above.
++import_config "#{Mix.env()}.exs"
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nohtml-nowebpack-umbrella-live-nodash/config/dev.exs config/dev.exs
+new file mode 100644
+index 0000000..b3471ee
+--- /dev/null
++++ config/dev.exs
+@@ -0,0 +1,11 @@
++use Mix.Config
++
++# Do not include metadata nor timestamps in development logs
++config :logger, :console, format: "[$level] $message\n"
++
++# Initialize plugs at runtime for faster development compilation
++config :phoenix, :plug_init_mode, :runtime
++
++# Set a higher stacktrace during development. Avoid configuring such
++# in production as building large stacktraces may be expensive.
++config :phoenix, :stacktrace_depth, 20
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nohtml-nowebpack-umbrella-live-nodash/config/prod.exs config/prod.exs
+new file mode 100644
+index 0000000..8150a5b
+--- /dev/null
++++ config/prod.exs
+@@ -0,0 +1,8 @@
++use Mix.Config
++
++# Do not print debug messages in production
++config :logger, level: :info
++
++# Finally import the config/prod.secret.exs which loads secrets
++# and configuration from environment variables.
++import_config "prod.secret.exs"
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nohtml-nowebpack-umbrella-live-nodash/config/prod.secret.exs config/prod.secret.exs
+new file mode 100644
+index 0000000..a6ed850
+--- /dev/null
++++ config/prod.secret.exs
+@@ -0,0 +1,5 @@
++# In this file, we load production configuration and secrets
++# from environment variables. You can also hardcode secrets,
++# although such is generally not recommended and you have to
++# remember to add this file to your .gitignore.
++use Mix.Config
+diff --git a/projects/phoenix/1.5.7/binaryid-database-nogettext-nohtml-nowebpack-umbrella-live-nodash/config/test.exs config/test.exs
+new file mode 100644
+index 0000000..af29307
+--- /dev/null
++++ config/test.exs
+@@ -0,0 +1,4 @@
++use Mix.Config
++
++# Print only warnings and errors during test
++config :logger, level: :warn
+diff --git lib/my_app.ex b/projects/elixir/1.11.3/base/lib/my_app.ex
+deleted file mode 100644
+index af46ee9..0000000
+--- lib/my_app.ex
++++ /dev/null
+@@ -1,18 +0,0 @@
+-defmodule MyApp do
+-  @moduledoc """
+-  Documentation for `MyApp`.
+-  """
+-
+-  @doc """
+-  Hello world.
+-
+-  ## Examples
+-
+-      iex> MyApp.hello()
+-      :world
+-
+-  """
+-  def hello do
+-    :world
+-  end
+-end
+diff --git mix.exs mix.exs
+index 169ac20..099c509 100644
+--- mix.exs
++++ mix.exs
+@@ -1,28 +1,45 @@
+-defmodule MyApp.MixProject do
++defmodule MyApp.Umbrella.MixProject do
+   use Mix.Project
+ 
+   def project do
+     [
+-      app: :my_app,
++      apps_path: "apps",
+       version: "0.1.0",
+-      elixir: "~> 1.11",
+       start_permanent: Mix.env() == :prod,
+-      deps: deps()
++      deps: deps(),
++      aliases: aliases()
+     ]
+   end
+ 
+-  # Run "mix help compile.app" to learn about applications.
+-  def application do
+-    [
+-      extra_applications: [:logger]
+-    ]
++  # Dependencies can be Hex packages:
++  #
++  #   {:mydep, "~> 0.3.0"}
++  #
++  # Or git/path repositories:
++  #
++  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
++  #
++  # Type "mix help deps" for more examples and options.
++  #
++  # Dependencies listed here are available only for this project
++  # and cannot be accessed from applications inside the apps/ folder.
++  defp deps do
++    []
+   end
+ 
+-  # Run "mix help deps" to learn about dependencies.
+-  defp deps do
++  # Aliases are shortcuts or tasks specific to the current project.
++  # For example, to install project dependencies and perform other setup tasks, run:
++  #
++  #     $ mix setup
++  #
++  # See the documentation for `Mix` for more info on aliases.
++  #
++  # Aliases listed here are available only for this project
++  # and cannot be accessed from applications inside the apps/ folder.
++  defp aliases do
+     [
+-      # {:dep_from_hexpm, "~> 0.3.0"},
+-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
++      # run `mix setup` in all child apps
++      setup: ["cmd mix setup"]
+     ]
+   end
+ end
+diff --git test/my_app_test.exs b/projects/elixir/1.11.3/base/test/my_app_test.exs
+deleted file mode 100644
+index b775537..0000000
+--- test/my_app_test.exs
++++ /dev/null
+@@ -1,8 +0,0 @@
+-defmodule MyAppTest do
+-  use ExUnit.Case
+-  doctest MyApp
+-
+-  test "greets the world" do
+-    assert MyApp.hello() == :world
+-  end
+-end
+diff --git test/test_helper.exs b/projects/elixir/1.11.3/base/test/test_helper.exs
+deleted file mode 100644
+index 869559e..0000000
+--- test/test_helper.exs
++++ /dev/null
+@@ -1 +0,0 @@
+-ExUnit.start()

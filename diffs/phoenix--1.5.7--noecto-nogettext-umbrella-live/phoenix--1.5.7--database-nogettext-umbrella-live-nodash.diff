@@ -1,0 +1,409 @@
+diff --git apps/my_app/.formatter.exs apps/my_app/.formatter.exs
+index 3d8ce11..db86148 100644
+--- apps/my_app/.formatter.exs
++++ apps/my_app/.formatter.exs
+@@ -1,3 +1,5 @@
+ [
+-  inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
++  import_deps: [:ecto],
++  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
++  subdirectories: ["priv/*/migrations"]
+ ]
+diff --git apps/my_app/lib/my_app/application.ex apps/my_app/lib/my_app/application.ex
+index d968a2f..d2aa950 100644
+--- apps/my_app/lib/my_app/application.ex
++++ apps/my_app/lib/my_app/application.ex
+@@ -7,6 +7,8 @@ defmodule MyApp.Application do
+ 
+   def start(_type, _args) do
+     children = [
++      # Start the Ecto repository
++      MyApp.Repo,
+       # Start the PubSub system
+       {Phoenix.PubSub, name: MyApp.PubSub}
+       # Start a worker by calling: MyApp.Worker.start_link(arg)
+diff --git a/projects/phoenix/1.5.7/database-nogettext-umbrella-live-nodash/apps/my_app/lib/my_app/repo.ex apps/my_app/lib/my_app/repo.ex
+new file mode 100644
+index 0000000..c623d89
+--- /dev/null
++++ apps/my_app/lib/my_app/repo.ex
+@@ -0,0 +1,5 @@
++defmodule MyApp.Repo do
++  use Ecto.Repo,
++    otp_app: :my_app,
++    adapter: Ecto.Adapters.MyXQL
++end
+diff --git apps/my_app/mix.exs apps/my_app/mix.exs
+index 07cf694..7cf924c 100644
+--- apps/my_app/mix.exs
++++ apps/my_app/mix.exs
+@@ -36,7 +36,10 @@ defmodule MyApp.MixProject do
+   # Type `mix help deps` for examples and options.
+   defp deps do
+     [
+-      {:phoenix_pubsub, "~> 2.0"}
++      {:phoenix_pubsub, "~> 2.0"},
++      {:ecto_sql, "~> 3.4"},
++      {:myxql, ">= 0.0.0"},
++      {:jason, "~> 1.0"}
+     ]
+   end
+ 
+@@ -45,7 +48,10 @@ defmodule MyApp.MixProject do
+   # See the documentation for `Mix` for more info on aliases.
+   defp aliases do
+     [
+-      setup: ["deps.get"]
++      setup: ["deps.get", "ecto.setup"],
++      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
++      "ecto.reset": ["ecto.drop", "ecto.setup"],
++      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+     ]
+   end
+ end
+diff --git a/projects/phoenix/1.5.7/database-nogettext-umbrella-live-nodash/apps/my_app/priv/repo/migrations/.formatter.exs apps/my_app/priv/repo/migrations/.formatter.exs
+new file mode 100644
+index 0000000..49f9151
+--- /dev/null
++++ apps/my_app/priv/repo/migrations/.formatter.exs
+@@ -0,0 +1,4 @@
++[
++  import_deps: [:ecto_sql],
++  inputs: ["*.exs"]
++]
+diff --git a/projects/phoenix/1.5.7/database-nogettext-umbrella-live-nodash/apps/my_app/priv/repo/seeds.exs apps/my_app/priv/repo/seeds.exs
+new file mode 100644
+index 0000000..e4ba004
+--- /dev/null
++++ apps/my_app/priv/repo/seeds.exs
+@@ -0,0 +1,11 @@
++# Script for populating the database. You can run it as:
++#
++#     mix run priv/repo/seeds.exs
++#
++# Inside the script, you can read and write to any of your
++# repositories directly:
++#
++#     MyApp.Repo.insert!(%MyApp.SomeSchema{})
++#
++# We recommend using the bang functions (`insert!`, `update!`
++# and so on) as they will fail if something goes wrong.
+diff --git a/projects/phoenix/1.5.7/database-nogettext-umbrella-live-nodash/apps/my_app/test/support/data_case.ex apps/my_app/test/support/data_case.ex
+new file mode 100644
+index 0000000..774d271
+--- /dev/null
++++ apps/my_app/test/support/data_case.ex
+@@ -0,0 +1,55 @@
++defmodule MyApp.DataCase do
++  @moduledoc """
++  This module defines the setup for tests requiring
++  access to the application's data layer.
++
++  You may define functions here to be used as helpers in
++  your tests.
++
++  Finally, if the test case interacts with the database,
++  we enable the SQL sandbox, so changes done to the database
++  are reverted at the end of every test. If you are using
++  PostgreSQL, you can even run database tests asynchronously
++  by setting `use MyApp.DataCase, async: true`, although
++  this option is not recommended for other databases.
++  """
++
++  use ExUnit.CaseTemplate
++
++  using do
++    quote do
++      alias MyApp.Repo
++
++      import Ecto
++      import Ecto.Changeset
++      import Ecto.Query
++      import MyApp.DataCase
++    end
++  end
++
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
++    :ok
++  end
++
++  @doc """
++  A helper that transforms changeset errors into a map of messages.
++
++      assert {:error, changeset} = Accounts.create_user(%{password: "short"})
++      assert "password is too short" in errors_on(changeset).password
++      assert %{password: ["password is too short"]} = errors_on(changeset)
++
++  """
++  def errors_on(changeset) do
++    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
++      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
++        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
++      end)
++    end)
++  end
++end
+diff --git apps/my_app/test/test_helper.exs apps/my_app/test/test_helper.exs
+index 869559e..0491a89 100644
+--- apps/my_app/test/test_helper.exs
++++ apps/my_app/test/test_helper.exs
+@@ -1 +1,2 @@
+ ExUnit.start()
++Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
+diff --git apps/my_app_web/README.md apps/my_app_web/README.md
+index 6d4b014..c780169 100644
+--- apps/my_app_web/README.md
++++ apps/my_app_web/README.md
+@@ -3,6 +3,7 @@
+ To start your Phoenix server:
+ 
+   * Install dependencies with `mix deps.get`
++  * Create and migrate your database with `mix ecto.setup`
+   * Install Node.js dependencies with `npm install` inside the `assets` directory
+   * Start Phoenix endpoint with `mix phx.server`
+ 
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index cf23829..5f58d81 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,7 +7,7 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "ItGVk/HR"
++    signing_salt: "HgPNaEIc"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+@@ -32,12 +32,9 @@ defmodule MyAppWeb.Endpoint do
+     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+     plug Phoenix.LiveReloader
+     plug Phoenix.CodeReloader
++    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app_web
+   end
+ 
+-  plug Phoenix.LiveDashboard.RequestLogger,
+-    param_key: "request_logger",
+-    cookie_key: "request_logger"
+-
+   plug Plug.RequestId
+   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+ 
+diff --git apps/my_app_web/lib/my_app_web/router.ex apps/my_app_web/lib/my_app_web/router.ex
+index ad9430e..d7a49da 100644
+--- apps/my_app_web/lib/my_app_web/router.ex
++++ apps/my_app_web/lib/my_app_web/router.ex
+@@ -24,20 +24,4 @@ defmodule MyAppWeb.Router do
+   # scope "/api", MyAppWeb do
+   #   pipe_through :api
+   # end
+-
+-  # Enables LiveDashboard only for development
+-  #
+-  # If you want to use the LiveDashboard in production, you should put
+-  # it behind authentication and allow only admins to access it.
+-  # If your application does not have an admins-only section yet,
+-  # you can use Plug.BasicAuth to set up some basic authentication
+-  # as long as you are also using SSL (which you should anyway).
+-  if Mix.env() in [:dev, :test] do
+-    import Phoenix.LiveDashboard.Router
+-
+-    scope "/" do
+-      pipe_through :browser
+-      live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
+-    end
+-  end
+ end
+diff --git apps/my_app_web/lib/my_app_web/telemetry.ex apps/my_app_web/lib/my_app_web/telemetry.ex
+index 9f50f3d..2c9c8ae 100644
+--- apps/my_app_web/lib/my_app_web/telemetry.ex
++++ apps/my_app_web/lib/my_app_web/telemetry.ex
+@@ -30,6 +30,13 @@ defmodule MyAppWeb.Telemetry do
+         unit: {:native, :millisecond}
+       ),
+ 
++      # Database Metrics
++      summary("my_app.repo.query.total_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.decode_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.query_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.queue_time", unit: {:native, :millisecond}),
++      summary("my_app.repo.query.idle_time", unit: {:native, :millisecond}),
++
+       # VM Metrics
+       summary("vm.memory.total", unit: {:byte, :kilobyte}),
+       summary("vm.total_run_queue_lengths.total"),
+diff --git apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
+index 630a552..d3b97a7 100644
+--- apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
++++ apps/my_app_web/lib/my_app_web/templates/layout/root.html.leex
+@@ -15,9 +15,7 @@
+         <nav role="navigation">
+           <ul>
+             <li><a href="https://hexdocs.pm/phoenix/overview.html">Get Started</a></li>
+-            <%= if function_exported?(Routes, :live_dashboard_path, 2) do %>
+-              <li><%= link "LiveDashboard", to: Routes.live_dashboard_path(@conn, :home) %></li>
+-            <% end %>
++            
+           </ul>
+         </nav>
+         <a href="https://phoenixframework.org/" class="phx-logo">
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index f151116..c204e4a 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -38,11 +38,11 @@ defmodule MyAppWeb.MixProject do
+   defp deps do
+     [
+       {:phoenix, "~> 1.5.7"},
++      {:phoenix_ecto, "~> 4.0"},
+       {:phoenix_live_view, "~> 0.15.0"},
+       {:floki, ">= 0.27.0", only: :test},
+       {:phoenix_html, "~> 2.11"},
+       {:phoenix_live_reload, "~> 1.2", only: :dev},
+-      {:phoenix_live_dashboard, "~> 0.4"},
+       {:telemetry_metrics, "~> 0.4"},
+       {:telemetry_poller, "~> 0.4"},
+       {:my_app, in_umbrella: true},
+@@ -56,7 +56,8 @@ defmodule MyAppWeb.MixProject do
+   # See the documentation for `Mix` for more info on aliases.
+   defp aliases do
+     [
+-      setup: ["deps.get", "cmd npm install --prefix assets"]
++      setup: ["deps.get", "cmd npm install --prefix assets"],
++      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+     ]
+   end
+ end
+diff --git apps/my_app_web/test/support/channel_case.ex apps/my_app_web/test/support/channel_case.ex
+index 2a1dfdb..831b300 100644
+--- apps/my_app_web/test/support/channel_case.ex
++++ apps/my_app_web/test/support/channel_case.ex
+@@ -28,7 +28,13 @@ defmodule MyAppWeb.ChannelCase do
+     end
+   end
+ 
+-  setup _tags do
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
+     :ok
+   end
+ end
+diff --git apps/my_app_web/test/support/conn_case.ex apps/my_app_web/test/support/conn_case.ex
+index ae658eb..a1d99dc 100644
+--- apps/my_app_web/test/support/conn_case.ex
++++ apps/my_app_web/test/support/conn_case.ex
+@@ -31,7 +31,13 @@ defmodule MyAppWeb.ConnCase do
+     end
+   end
+ 
+-  setup _tags do
++  setup tags do
++    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
++
++    unless tags[:async] do
++      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
++    end
++
+     {:ok, conn: Phoenix.ConnTest.build_conn()}
+   end
+ end
+diff --git apps/my_app_web/test/test_helper.exs apps/my_app_web/test/test_helper.exs
+index 869559e..0491a89 100644
+--- apps/my_app_web/test/test_helper.exs
++++ apps/my_app_web/test/test_helper.exs
+@@ -1 +1,2 @@
+ ExUnit.start()
++Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
+diff --git config/config.exs config/config.exs
+index d1757ad..0d15f7a 100644
+--- config/config.exs
++++ config/config.exs
+@@ -9,9 +9,12 @@
+ # move said applications out of the umbrella.
+ use Mix.Config
+ 
+-
++# Configure Mix tasks and generators
++config :my_app,
++  ecto_repos: [MyApp.Repo]
+ 
+ config :my_app_web,
++  ecto_repos: [MyApp.Repo],
+   generators: [context_app: :my_app]
+ 
+ # Configures the endpoint
+diff --git config/dev.exs config/dev.exs
+index 407b9f8..1db8da7 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -1,5 +1,14 @@
+ use Mix.Config
+ 
++# Configure your database
++config :my_app, MyApp.Repo,
++  username: "root",
++  password: "",
++  database: "my_app_dev",
++  hostname: "localhost",
++  show_sensitive_data_on_connection_error: true,
++  pool_size: 10
++
+ # For development, we disable any cache and enable
+ # debugging and code reloading.
+ #
+diff --git config/prod.secret.exs config/prod.secret.exs
+index 702c128..b201076 100644
+--- config/prod.secret.exs
++++ config/prod.secret.exs
+@@ -4,6 +4,18 @@
+ # remember to add this file to your .gitignore.
+ use Mix.Config
+ 
++database_url =
++  System.get_env("DATABASE_URL") ||
++    raise """
++    environment variable DATABASE_URL is missing.
++    For example: ecto://USER:PASS@HOST/DATABASE
++    """
++
++config :my_app, MyApp.Repo,
++  # ssl: true,
++  url: database_url,
++  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
++
+ secret_key_base =
+   System.get_env("SECRET_KEY_BASE") ||
+     raise """
+diff --git config/test.exs config/test.exs
+index 8fd529b..d357643 100644
+--- config/test.exs
++++ config/test.exs
+@@ -1,5 +1,17 @@
+ use Mix.Config
+ 
++# Configure your database
++#
++# The MIX_TEST_PARTITION environment variable can be used
++# to provide built-in test partitioning in CI environment.
++# Run `mix help test` for more information.
++config :my_app, MyApp.Repo,
++  username: "root",
++  password: "",
++  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
++  hostname: "localhost",
++  pool: Ecto.Adapters.SQL.Sandbox
++
+ # We don't run a server during test. If one is required,
+ # you can enable the server option below.
+ config :my_app_web, MyAppWeb.Endpoint,

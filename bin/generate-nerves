@@ -1,0 +1,55 @@
+#!/bin/bash
+
+if [ -z "$1" ]
+then
+  echo "Usage: $0 [Nerves Version]"
+  exit 1
+fi
+
+NERVES_VERSION="$1"
+
+#
+# Install archive
+#
+
+echo "Installing archive for mix nerves.new $NERVES_VERSION"
+mix local.hex --force
+mix archive.install hex nerves_bootstrap $NERVES_VERSION --force
+
+mkdir -p "projects/nerves/$NERVES_VERSION/"
+cd "projects/nerves/$NERVES_VERSION"
+
+#
+# Helper
+#
+
+replace_if_exists() {
+  if [ -f "$2" ]
+  then
+    sed -i'' "$1" "$2"
+  else
+    echo "Could not find file $2"
+  fi
+}
+
+#
+# mix nerves.new
+#
+
+echo no \
+  | mix nerves.new \
+  --app my_app --module MyApp \
+  base/
+
+replace_if_exists 's/source_date_epoch:.*/source_date_epoch: "[redacted]"/g' base/config/config.exs
+
+#
+# mix nerves.new --no-nerves-pack
+#
+
+echo no \
+  | mix nerves.new --no-nerves-pack \
+  --app my_app --module MyApp \
+  no-nerves-pack/
+
+replace_if_exists 's/source_date_epoch:.*/source_date_epoch: "[redacted]"/g' no-nerves-pack/config/config.exs

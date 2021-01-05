@@ -1,0 +1,49 @@
+#!/bin/bash
+
+ELIXIR_VERSION="$(elixir --eval 'IO.puts(System.version())')"
+echo "Using Elixir version $ELIXIR_VERSION."
+mkdir -p "projects/elixir/$ELIXIR_VERSION/"
+
+#
+# mix new
+#
+
+(
+  cd "projects/elixir/$ELIXIR_VERSION"
+  mix new \
+    --app my_app --module MyApp \
+    base/
+) || exit 1
+
+#
+# mix new --sup
+#
+
+(
+  cd "projects/elixir/$ELIXIR_VERSION"
+  mix new --sup \
+    --app my_app --module MyApp \
+    sup/
+) || exit 1
+
+#
+# mix new --umbrella
+#
+
+(
+  cd "projects/elixir/$ELIXIR_VERSION"
+  mix new --umbrella \
+    --app my_app --module MyApp \
+    umbrella/
+) || exit 1
+
+#
+# mix new --sup --umbrella
+#
+
+(
+  cd "projects/elixir/$ELIXIR_VERSION"
+  mix new --sup --umbrella \
+    --app my_app --module MyApp \
+    sup-umbrella/
+) || exit 1

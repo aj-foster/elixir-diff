@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Much of this script was adapted from the folks at PhoenixDiff.
+# https://github.com/navinpeiris/phoenix-diff/blob/master/bin/generate-sample-app
+
+if [ -z "$1" ]
+then
+  echo "Usage: $0 [Phoenix Version]"
+  exit 1
+fi
+
+PHOENIX_VERSION="$1"
+
+#
+# Install archive
+#
+
+echo "Installing archive for mix phx.new $PHOENIX_VERSION"
+mix local.hex --force
+mix archive.install hex phx_new $PHOENIX_VERSION --force
+
+mkdir -p "projects/phoenix/$PHOENIX_VERSION/"
+cd "projects/phoenix/$PHOENIX_VERSION"
+
+#
+# Cycle through all possible flag combinations
+#
+
+# Flags:
+#
+# --umbrella --database mysql --no-webpack --no-ecto
+# --no-html --no-gettext --binary-id
+#
+# (on/off) ^ (7 flags) = 128 combinations. Yikes.
+
+replace_if_exists() {
+  if [ -f "$2" ]
+  then
+    sed -i'' "$1" "$2"
+  else
+    echo "Could not find file $2"
+  fi
+}
+
+generate() {
+  # Create a truth table using bitwise AND of the incrementing integer $i.
+  let "binaryid =  $1 & 2#1"
+  let "database =  $1 & 2#10"
+  let "noecto =    $1 & 2#100"
+  let "nogettext = $1 & 2#1000"
+  let "nohtml =    $1 & 2#10000"
+  let "nowebpack = $1 & 2#100000"
+  let "umbrella =  $1 & 2#1000000"
+  let "live =      $1 & 2#10000000"
+  let "nodash =    $1 & 2#100000000"
+
+  FLAGS=""
+  VARIANT=""
+
+  if [ $binaryid -eq 0 ];  then FLAGS="$FLAGS --binary-id";      VARIANT="$VARIANT-binaryid"; fi
+  if [ $database -eq 0 ];  then FLAGS="$FLAGS --database mysql"; VARIANT="$VARIANT-database"; fi
+  if [ $noecto -eq 0 ];    then FLAGS="$FLAGS --no-ecto";        VARIANT="$VARIANT-noecto"; fi
+  if [ $nogettext -eq 0 ]; then FLAGS="$FLAGS --no-gettext";     VARIANT="$VARIANT-nogettext"; fi
+  if [ $nohtml -eq 0 ];    then FLAGS="$FLAGS --no-html";        VARIANT="$VARIANT-nohtml"; fi
+  if [ $nowebpack -eq 0 ]; then FLAGS="$FLAGS --no-webpack";     VARIANT="$VARIANT-nowebpack"; fi
+  if [ $umbrella -eq 0 ];  then FLAGS="$FLAGS --umbrella";       VARIANT="$VARIANT-umbrella"; fi
+  if [ $live -eq 0 ];      then FLAGS="$FLAGS --live";           VARIANT="$VARIANT-live"; fi
+  if [ $nodash -eq 0 ];    then FLAGS="$FLAGS --no-dashboard";   VARIANT="$VARIANT-nodash"; fi
+
+  if [ -z "$VARIANT" ]; then VARIANT="base"; else VARIANT="${VARIANT:1}"; fi
+  if [ -d $VARIANT ]; then exit 0; fi
+
+  echo no \
+    | mix phx.new $FLAGS \
+    --app my_app --module MyApp \
+    $VARIANT/
+
+  if [ $umbrella -eq 0 ]; then mv "${VARIANT}_umbrella" $VARIANT; fi
+
+  replace_if_exists 's/secret_key_base:.*/secret_key_base: "[redacted]",/g' $VARIANT/config/config.exs
+  replace_if_exists 's/signing_salt:.*/signing_salt: "[redacted]"]/g' $VARIANT/config/config.exs
+  replace_if_exists 's/signing_salt:.*/signing_salt: "[redacted]"/g' $VARIANT/lib/my_app_web/endpoint.ex
+}
+
+# Parallelize the generation of projects. Change the -P flag to match # of cores.
+export -f generate
+export -f replace_if_exists
+seq 0 511 | xargs -n 1 -P 16 -I {} bash -c 'generate "{}"'

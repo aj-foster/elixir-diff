@@ -1,0 +1,80 @@
+diff --git apps/my_app/lib/my_app/repo.ex apps/my_app/lib/my_app/repo.ex
+index 595ff57..c623d89 100644
+--- apps/my_app/lib/my_app/repo.ex
++++ apps/my_app/lib/my_app/repo.ex
+@@ -1,5 +1,5 @@
+ defmodule MyApp.Repo do
+   use Ecto.Repo,
+     otp_app: :my_app,
+-    adapter: Ecto.Adapters.Postgres
++    adapter: Ecto.Adapters.MyXQL
+ end
+diff --git apps/my_app/mix.exs apps/my_app/mix.exs
+index 8cbc8b8..7cf924c 100644
+--- apps/my_app/mix.exs
++++ apps/my_app/mix.exs
+@@ -38,7 +38,7 @@ defmodule MyApp.MixProject do
+     [
+       {:phoenix_pubsub, "~> 2.0"},
+       {:ecto_sql, "~> 3.4"},
+-      {:postgrex, ">= 0.0.0"},
++      {:myxql, ">= 0.0.0"},
+       {:jason, "~> 1.0"}
+     ]
+   end
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index 3f16175..df7c7dd 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,7 +7,7 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "M1krvFO7"
++    signing_salt: "L0+JItk6"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+diff --git config/config.exs config/config.exs
+index 0d15f7a..34378a3 100644
+--- config/config.exs
++++ config/config.exs
+@@ -15,7 +15,7 @@ config :my_app,
+ 
+ config :my_app_web,
+   ecto_repos: [MyApp.Repo],
+-  generators: [context_app: :my_app]
++  generators: [context_app: :my_app, binary_id: true]
+ 
+ # Configures the endpoint
+ config :my_app_web, MyAppWeb.Endpoint,
+diff --git config/dev.exs config/dev.exs
+index 9a31fdb..02341ee 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -2,8 +2,8 @@ use Mix.Config
+ 
+ # Configure your database
+ config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
++  username: "root",
++  password: "",
+   database: "my_app_dev",
+   hostname: "localhost",
+   show_sensitive_data_on_connection_error: true,
+diff --git config/test.exs config/test.exs
+index a885229..d357643 100644
+--- config/test.exs
++++ config/test.exs
+@@ -6,8 +6,8 @@ use Mix.Config
+ # to provide built-in test partitioning in CI environment.
+ # Run `mix help test` for more information.
+ config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
++  username: "root",
++  password: "",
+   database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
+   hostname: "localhost",
+   pool: Ecto.Adapters.SQL.Sandbox

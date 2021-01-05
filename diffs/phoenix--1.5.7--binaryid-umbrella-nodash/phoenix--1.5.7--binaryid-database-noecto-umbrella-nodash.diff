@@ -1,0 +1,545 @@
+diff --git apps/my_app/.formatter.exs apps/my_app/.formatter.exs
+index db86148..3d8ce11 100644
+--- apps/my_app/.formatter.exs
++++ apps/my_app/.formatter.exs
+@@ -1,5 +1,3 @@
+ [
+-  import_deps: [:ecto],
+-  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
+-  subdirectories: ["priv/*/migrations"]
++  inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
+ ]
+diff --git apps/my_app/lib/my_app/application.ex apps/my_app/lib/my_app/application.ex
+index d2aa950..d968a2f 100644
+--- apps/my_app/lib/my_app/application.ex
++++ apps/my_app/lib/my_app/application.ex
+@@ -7,8 +7,6 @@ defmodule MyApp.Application do
+ 
+   def start(_type, _args) do
+     children = [
+-      # Start the Ecto repository
+-      MyApp.Repo,
+       # Start the PubSub system
+       {Phoenix.PubSub, name: MyApp.PubSub}
+       # Start a worker by calling: MyApp.Worker.start_link(arg)
+diff --git apps/my_app/lib/my_app/repo.ex b/projects/phoenix/1.5.7/binaryid-umbrella-nodash/apps/my_app/lib/my_app/repo.ex
+deleted file mode 100644
+index 595ff57..0000000
+--- apps/my_app/lib/my_app/repo.ex
++++ /dev/null
+@@ -1,5 +0,0 @@
+-defmodule MyApp.Repo do
+-  use Ecto.Repo,
+-    otp_app: :my_app,
+-    adapter: Ecto.Adapters.Postgres
+-end
+diff --git apps/my_app/mix.exs apps/my_app/mix.exs
+index 8cbc8b8..07cf694 100644
+--- apps/my_app/mix.exs
++++ apps/my_app/mix.exs
+@@ -36,10 +36,7 @@ defmodule MyApp.MixProject do
+   # Type `mix help deps` for examples and options.
+   defp deps do
+     [
+-      {:phoenix_pubsub, "~> 2.0"},
+-      {:ecto_sql, "~> 3.4"},
+-      {:postgrex, ">= 0.0.0"},
+-      {:jason, "~> 1.0"}
++      {:phoenix_pubsub, "~> 2.0"}
+     ]
+   end
+ 
+@@ -48,10 +45,7 @@ defmodule MyApp.MixProject do
+   # See the documentation for `Mix` for more info on aliases.
+   defp aliases do
+     [
+-      setup: ["deps.get", "ecto.setup"],
+-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
++      setup: ["deps.get"]
+     ]
+   end
+ end
+diff --git apps/my_app/priv/repo/migrations/.formatter.exs b/projects/phoenix/1.5.7/binaryid-umbrella-nodash/apps/my_app/priv/repo/migrations/.formatter.exs
+deleted file mode 100644
+index 49f9151..0000000
+--- apps/my_app/priv/repo/migrations/.formatter.exs
++++ /dev/null
+@@ -1,4 +0,0 @@
+-[
+-  import_deps: [:ecto_sql],
+-  inputs: ["*.exs"]
+-]
+diff --git apps/my_app/priv/repo/seeds.exs b/projects/phoenix/1.5.7/binaryid-umbrella-nodash/apps/my_app/priv/repo/seeds.exs
+deleted file mode 100644
+index e4ba004..0000000
+--- apps/my_app/priv/repo/seeds.exs
++++ /dev/null
+@@ -1,11 +0,0 @@
+-# Script for populating the database. You can run it as:
+-#
+-#     mix run priv/repo/seeds.exs
+-#
+-# Inside the script, you can read and write to any of your
+-# repositories directly:
+-#
+-#     MyApp.Repo.insert!(%MyApp.SomeSchema{})
+-#
+-# We recommend using the bang functions (`insert!`, `update!`
+-# and so on) as they will fail if something goes wrong.
+diff --git apps/my_app/test/support/data_case.ex b/projects/phoenix/1.5.7/binaryid-umbrella-nodash/apps/my_app/test/support/data_case.ex
+deleted file mode 100644
+index 774d271..0000000
+--- apps/my_app/test/support/data_case.ex
++++ /dev/null
+@@ -1,55 +0,0 @@
+-defmodule MyApp.DataCase do
+-  @moduledoc """
+-  This module defines the setup for tests requiring
+-  access to the application's data layer.
+-
+-  You may define functions here to be used as helpers in
+-  your tests.
+-
+-  Finally, if the test case interacts with the database,
+-  we enable the SQL sandbox, so changes done to the database
+-  are reverted at the end of every test. If you are using
+-  PostgreSQL, you can even run database tests asynchronously
+-  by setting `use MyApp.DataCase, async: true`, although
+-  this option is not recommended for other databases.
+-  """
+-
+-  use ExUnit.CaseTemplate
+-
+-  using do
+-    quote do
+-      alias MyApp.Repo
+-
+-      import Ecto
+-      import Ecto.Changeset
+-      import Ecto.Query
+-      import MyApp.DataCase
+-    end
+-  end
+-
+-  setup tags do
+-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
+-
+-    unless tags[:async] do
+-      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
+-    end
+-
+-    :ok
+-  end
+-
+-  @doc """
+-  A helper that transforms changeset errors into a map of messages.
+-
+-      assert {:error, changeset} = Accounts.create_user(%{password: "short"})
+-      assert "password is too short" in errors_on(changeset).password
+-      assert %{password: ["password is too short"]} = errors_on(changeset)
+-
+-  """
+-  def errors_on(changeset) do
+-    Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
+-      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
+-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+-      end)
+-    end)
+-  end
+-end
+diff --git apps/my_app/test/test_helper.exs apps/my_app/test/test_helper.exs
+index 0491a89..869559e 100644
+--- apps/my_app/test/test_helper.exs
++++ apps/my_app/test/test_helper.exs
+@@ -1,2 +1 @@
+ ExUnit.start()
+-Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
+diff --git apps/my_app_web/README.md apps/my_app_web/README.md
+index c780169..6d4b014 100644
+--- apps/my_app_web/README.md
++++ apps/my_app_web/README.md
+@@ -3,7 +3,6 @@
+ To start your Phoenix server:
+ 
+   * Install dependencies with `mix deps.get`
+-  * Create and migrate your database with `mix ecto.setup`
+   * Install Node.js dependencies with `npm install` inside the `assets` directory
+   * Start Phoenix endpoint with `mix phx.server`
+ 
+diff --git apps/my_app_web/lib/my_app_web/endpoint.ex apps/my_app_web/lib/my_app_web/endpoint.ex
+index f121beb..03b490c 100644
+--- apps/my_app_web/lib/my_app_web/endpoint.ex
++++ apps/my_app_web/lib/my_app_web/endpoint.ex
+@@ -7,7 +7,7 @@ defmodule MyAppWeb.Endpoint do
+   @session_options [
+     store: :cookie,
+     key: "_my_app_web_key",
+-    signing_salt: "E3yT03sx"
++    signing_salt: "E9BVFLR9"
+   ]
+ 
+   socket "/socket", MyAppWeb.UserSocket,
+@@ -30,7 +30,6 @@ defmodule MyAppWeb.Endpoint do
+     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+     plug Phoenix.LiveReloader
+     plug Phoenix.CodeReloader
+-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :my_app_web
+   end
+ 
+   plug Plug.RequestId
+diff --git apps/my_app_web/lib/my_app_web/telemetry.ex apps/my_app_web/lib/my_app_web/telemetry.ex
+index 2c9c8ae..9f50f3d 100644
+--- apps/my_app_web/lib/my_app_web/telemetry.ex
++++ apps/my_app_web/lib/my_app_web/telemetry.ex
+@@ -30,13 +30,6 @@ defmodule MyAppWeb.Telemetry do
+         unit: {:native, :millisecond}
+       ),
+ 
+-      # Database Metrics
+-      summary("my_app.repo.query.total_time", unit: {:native, :millisecond}),
+-      summary("my_app.repo.query.decode_time", unit: {:native, :millisecond}),
+-      summary("my_app.repo.query.query_time", unit: {:native, :millisecond}),
+-      summary("my_app.repo.query.queue_time", unit: {:native, :millisecond}),
+-      summary("my_app.repo.query.idle_time", unit: {:native, :millisecond}),
+-
+       # VM Metrics
+       summary("vm.memory.total", unit: {:byte, :kilobyte}),
+       summary("vm.total_run_queue_lengths.total"),
+diff --git apps/my_app_web/mix.exs apps/my_app_web/mix.exs
+index b20c3b5..cf886a0 100644
+--- apps/my_app_web/mix.exs
++++ apps/my_app_web/mix.exs
+@@ -38,7 +38,6 @@ defmodule MyAppWeb.MixProject do
+   defp deps do
+     [
+       {:phoenix, "~> 1.5.7"},
+-      {:phoenix_ecto, "~> 4.0"},
+       {:phoenix_html, "~> 2.11"},
+       {:phoenix_live_reload, "~> 1.2", only: :dev},
+       {:telemetry_metrics, "~> 0.4"},
+@@ -55,8 +54,7 @@ defmodule MyAppWeb.MixProject do
+   # See the documentation for `Mix` for more info on aliases.
+   defp aliases do
+     [
+-      setup: ["deps.get", "cmd npm install --prefix assets"],
+-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
++      setup: ["deps.get", "cmd npm install --prefix assets"]
+     ]
+   end
+ end
+diff --git apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
+index a589998..cdec3a1 100644
+--- apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
++++ apps/my_app_web/priv/gettext/en/LC_MESSAGES/errors.po
+@@ -9,89 +9,3 @@
+ msgid ""
+ msgstr ""
+ "Language: en\n"
+-
+-## From Ecto.Changeset.cast/4
+-msgid "can't be blank"
+-msgstr ""
+-
+-## From Ecto.Changeset.unique_constraint/3
+-msgid "has already been taken"
+-msgstr ""
+-
+-## From Ecto.Changeset.put_change/3
+-msgid "is invalid"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_acceptance/3
+-msgid "must be accepted"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_format/3
+-msgid "has invalid format"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_subset/3
+-msgid "has an invalid entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_exclusion/3
+-msgid "is reserved"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_confirmation/3
+-msgid "does not match confirmation"
+-msgstr ""
+-
+-## From Ecto.Changeset.no_assoc_constraint/3
+-msgid "is still associated with this entry"
+-msgstr ""
+-
+-msgid "are still associated with this entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_length/3
+-msgid "should be %{count} character(s)"
+-msgid_plural "should be %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have %{count} item(s)"
+-msgid_plural "should have %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at least %{count} character(s)"
+-msgid_plural "should be at least %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at least %{count} item(s)"
+-msgid_plural "should have at least %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at most %{count} character(s)"
+-msgid_plural "should be at most %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at most %{count} item(s)"
+-msgid_plural "should have at most %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-## From Ecto.Changeset.validate_number/3
+-msgid "must be less than %{number}"
+-msgstr ""
+-
+-msgid "must be greater than %{number}"
+-msgstr ""
+-
+-msgid "must be less than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be greater than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be equal to %{number}"
+-msgstr ""
+diff --git apps/my_app_web/priv/gettext/errors.pot apps/my_app_web/priv/gettext/errors.pot
+index 39a220b..d6f47fa 100644
+--- apps/my_app_web/priv/gettext/errors.pot
++++ apps/my_app_web/priv/gettext/errors.pot
+@@ -8,88 +8,3 @@
+ ## date. Leave `msgstr`s empty as changing them here has no
+ ## effect: edit them in PO (`.po`) files instead.
+ 
+-## From Ecto.Changeset.cast/4
+-msgid "can't be blank"
+-msgstr ""
+-
+-## From Ecto.Changeset.unique_constraint/3
+-msgid "has already been taken"
+-msgstr ""
+-
+-## From Ecto.Changeset.put_change/3
+-msgid "is invalid"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_acceptance/3
+-msgid "must be accepted"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_format/3
+-msgid "has invalid format"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_subset/3
+-msgid "has an invalid entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_exclusion/3
+-msgid "is reserved"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_confirmation/3
+-msgid "does not match confirmation"
+-msgstr ""
+-
+-## From Ecto.Changeset.no_assoc_constraint/3
+-msgid "is still associated with this entry"
+-msgstr ""
+-
+-msgid "are still associated with this entry"
+-msgstr ""
+-
+-## From Ecto.Changeset.validate_length/3
+-msgid "should be %{count} character(s)"
+-msgid_plural "should be %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have %{count} item(s)"
+-msgid_plural "should have %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at least %{count} character(s)"
+-msgid_plural "should be at least %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at least %{count} item(s)"
+-msgid_plural "should have at least %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should be at most %{count} character(s)"
+-msgid_plural "should be at most %{count} character(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-msgid "should have at most %{count} item(s)"
+-msgid_plural "should have at most %{count} item(s)"
+-msgstr[0] ""
+-msgstr[1] ""
+-
+-## From Ecto.Changeset.validate_number/3
+-msgid "must be less than %{number}"
+-msgstr ""
+-
+-msgid "must be greater than %{number}"
+-msgstr ""
+-
+-msgid "must be less than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be greater than or equal to %{number}"
+-msgstr ""
+-
+-msgid "must be equal to %{number}"
+-msgstr ""
+diff --git apps/my_app_web/test/support/channel_case.ex apps/my_app_web/test/support/channel_case.ex
+index 831b300..2a1dfdb 100644
+--- apps/my_app_web/test/support/channel_case.ex
++++ apps/my_app_web/test/support/channel_case.ex
+@@ -28,13 +28,7 @@ defmodule MyAppWeb.ChannelCase do
+     end
+   end
+ 
+-  setup tags do
+-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
+-
+-    unless tags[:async] do
+-      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
+-    end
+-
++  setup _tags do
+     :ok
+   end
+ end
+diff --git apps/my_app_web/test/support/conn_case.ex apps/my_app_web/test/support/conn_case.ex
+index a1d99dc..ae658eb 100644
+--- apps/my_app_web/test/support/conn_case.ex
++++ apps/my_app_web/test/support/conn_case.ex
+@@ -31,13 +31,7 @@ defmodule MyAppWeb.ConnCase do
+     end
+   end
+ 
+-  setup tags do
+-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(MyApp.Repo)
+-
+-    unless tags[:async] do
+-      Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, {:shared, self()})
+-    end
+-
++  setup _tags do
+     {:ok, conn: Phoenix.ConnTest.build_conn()}
+   end
+ end
+diff --git apps/my_app_web/test/test_helper.exs apps/my_app_web/test/test_helper.exs
+index 0491a89..869559e 100644
+--- apps/my_app_web/test/test_helper.exs
++++ apps/my_app_web/test/test_helper.exs
+@@ -1,2 +1 @@
+ ExUnit.start()
+-Ecto.Adapters.SQL.Sandbox.mode(MyApp.Repo, :manual)
+diff --git config/config.exs config/config.exs
+index 34378a3..173ca58 100644
+--- config/config.exs
++++ config/config.exs
+@@ -9,12 +9,9 @@
+ # move said applications out of the umbrella.
+ use Mix.Config
+ 
+-# Configure Mix tasks and generators
+-config :my_app,
+-  ecto_repos: [MyApp.Repo]
++
+ 
+ config :my_app_web,
+-  ecto_repos: [MyApp.Repo],
+   generators: [context_app: :my_app, binary_id: true]
+ 
+ # Configures the endpoint
+diff --git config/dev.exs config/dev.exs
+index 9a31fdb..cc59c4f 100644
+--- config/dev.exs
++++ config/dev.exs
+@@ -1,14 +1,5 @@
+ use Mix.Config
+ 
+-# Configure your database
+-config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
+-  database: "my_app_dev",
+-  hostname: "localhost",
+-  show_sensitive_data_on_connection_error: true,
+-  pool_size: 10
+-
+ # For development, we disable any cache and enable
+ # debugging and code reloading.
+ #
+diff --git config/prod.secret.exs config/prod.secret.exs
+index b201076..702c128 100644
+--- config/prod.secret.exs
++++ config/prod.secret.exs
+@@ -4,18 +4,6 @@
+ # remember to add this file to your .gitignore.
+ use Mix.Config
+ 
+-database_url =
+-  System.get_env("DATABASE_URL") ||
+-    raise """
+-    environment variable DATABASE_URL is missing.
+-    For example: ecto://USER:PASS@HOST/DATABASE
+-    """
+-
+-config :my_app, MyApp.Repo,
+-  # ssl: true,
+-  url: database_url,
+-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+-
+ secret_key_base =
+   System.get_env("SECRET_KEY_BASE") ||
+     raise """
+diff --git config/test.exs config/test.exs
+index a885229..8fd529b 100644
+--- config/test.exs
++++ config/test.exs
+@@ -1,17 +1,5 @@
+ use Mix.Config
+ 
+-# Configure your database
+-#
+-# The MIX_TEST_PARTITION environment variable can be used
+-# to provide built-in test partitioning in CI environment.
+-# Run `mix help test` for more information.
+-config :my_app, MyApp.Repo,
+-  username: "postgres",
+-  password: "postgres",
+-  database: "my_app_test#{System.get_env("MIX_TEST_PARTITION")}",
+-  hostname: "localhost",
+-  pool: Ecto.Adapters.SQL.Sandbox
+-
+ # We don't run a server during test. If one is required,
+ # you can enable the server option below.
+ config :my_app_web, MyAppWeb.Endpoint,

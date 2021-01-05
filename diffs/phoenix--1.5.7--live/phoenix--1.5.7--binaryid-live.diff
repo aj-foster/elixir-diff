@@ -1,0 +1,14 @@
+diff --git config/config.exs config/config.exs
+index 1e1fcef..cdd0d02 100644
+--- config/config.exs
++++ config/config.exs
+@@ -8,7 +8,8 @@
+ use Mix.Config
+ 
+ config :my_app,
+-  ecto_repos: [MyApp.Repo]
++  ecto_repos: [MyApp.Repo],
++  generators: [binary_id: true]
+ 
+ # Configures the endpoint
+ config :my_app, MyAppWeb.Endpoint,
