@@ -20,7 +20,7 @@ jobs:
           grep -v '-' | \
           head -1 | \
           sed 's/["v]//g' > elixir-version.txt
-      - run: 'echo "::set-env name=ELIXIR_VERSION::$(cat elixir-version.txt)"'
+      - run: 'echo "ELIXIR_VERSION=$(cat elixir-version.txt)" >> $GITHUB_ENV'
 
       # Check for the latest version of Phoenix.
       #
@@ -32,7 +32,7 @@ jobs:
           grep -v '-' | \
           head -1 | \
           sed 's/"//g' > phoenix-version.txt
-      - run: 'echo "::set-env name=PHOENIX_VERSION::$(cat phoenix-version.txt)"'
+      - run: 'echo "PHOENIX_VERSION=$(cat phoenix-version.txt)" >> $GITHUB_ENV'
 
       # Check for the latest version of Nerves.
       #
@@ -44,7 +44,7 @@ jobs:
           grep -v '-' | \
           head -1 | \
           sed 's/"//g' > nerves-version.txt
-      - run: 'echo "::set-env name=NERVES_VERSION::$(cat nerves-version.txt)"'
+      - run: 'echo "NERVES_VERSION=$(cat nerves-version.txt)" >> $GITHUB_ENV'
 
       # Install Elixir
       - name: Install Elixir
